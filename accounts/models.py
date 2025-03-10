@@ -8,7 +8,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=30,null=True,blank=True)
     email = models.EmailField(unique=True)
     business_name = models.CharField(max_length=255)
-    google_place_id = models.CharField(max_length=255, unique=True, help_text="Google Maps Place ID")
     phone_number = models.CharField(max_length=15, unique=True)
     address = models.TextField()
     city = models.CharField(max_length=100)
@@ -19,7 +18,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
 
     objects = CustomUserManager()
-
     USERNAME_FIELD = 'email'
     # REQUIRED_FIELDS = ['first_name', 'last_name']
 
@@ -31,3 +29,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.email
     
 
+
+
+
+    
