@@ -3,7 +3,16 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .manager import CustomUserManager
 
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+from django.db import models
+
+class TimestampMixin(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)  
+    updated_at = models.DateTimeField(auto_now=True)      
+
+    class Meta:
+        abstract = True  
+
+class CustomUser(AbstractBaseUser,TimestampMixin, PermissionsMixin):
     first_name = models.CharField(max_length=30,null=True,blank=True)
     last_name = models.CharField(max_length=30,null=True,blank=True)
     email = models.EmailField(unique=True)
