@@ -20,7 +20,7 @@ class ServicePlatformsAdmin(admin.ModelAdmin):
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'name', 'email', 'phone_number', 'get_campaigns','get_service_providers')
-
+    list_filter = ('campaign','campaign__service_provider')
     def get_campaigns(self, obj):
         return ", ".join([campaign.name for campaign in obj.campaign.all()])
     get_campaigns.short_description = 'Campaigns'
