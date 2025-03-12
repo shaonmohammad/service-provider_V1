@@ -30,7 +30,10 @@ class ServicePlatformListView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return ServicePlatforms.objects.filter(service_provider=self.request.user)     
+        queryset =  ServicePlatforms.objects.filter(service_provider=self.request.user)     
+        if not queryset.exists():
+            return ServicePlatforms.objects.none()
+        return queryset
 
 class CampaignCreateAPIView(ListCreateAPIView):
     queryset = Campaign.objects.all()
@@ -66,7 +69,7 @@ class CustomerListAPIView(ListAPIView):
             campaign__service_provider=self.request.user,
             campaign__id=campaign_id,
             campaign__service_platforms__id=service_platform_id
-        ).select_related('campaign').prefetch_related('campaign__service_platforms')
+        )
 
         if not queryset.exists():
             return Customer.objects.none()

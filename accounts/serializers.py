@@ -25,6 +25,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Create a new user
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
+            password = validated_data['password'],
             first_name = validated_data['first_name'],
             last_name = validated_data['last_name'],
             business_name = validated_data['business_name'],
@@ -35,6 +36,4 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             country = validated_data['country'],
             profile_picture = validated_data['profile_picture']
         )
-        password = validated_data['password']
-        user.set_password(password)
         return user
