@@ -31,5 +31,13 @@ class CustomerAdmin(admin.ModelAdmin):
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin):
-    list_display = ('created_at','name','description','service_provider')
+    list_display = ('created_at','name','description','get_service_provider','get_service_platforms')
     list_filter = ('service_provider',)
+
+    def get_service_provider(self, obj):
+        return f'{obj.service_provider.first_name} {obj.service_provider.last_name}' if obj.service_provider.first_name else ''
+    get_service_provider.short_description = 'Service Providers'
+
+    def get_service_platforms(self, obj):
+        return obj.service_platforms.platform
+    get_service_platforms.short_description = 'Service Platforms'

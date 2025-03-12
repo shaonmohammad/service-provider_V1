@@ -6,7 +6,7 @@ class PlatformSerializer(serializers.ModelSerializer):
         model = Platform
         fields = ('id','name')
         
-class ServicePlatformsSerializer(serializers.ModelSerializer):
+class ServicePlatformsCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServicePlatforms
         fields = ('service_provider','platform','credentials')
@@ -32,15 +32,18 @@ class ServicePlatformsSerializer(serializers.ModelSerializer):
 
         return super().to_internal_value(data)
     
+class CustomerListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['name', 'email', 'phone_number', 'address','is_sent_email','is_given_review']
 
-class CustomerSerializer(serializers.ModelSerializer):
+class CustomerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['name', 'email', 'phone_number', 'address']
-
-
+    
 class CampaignSerializer(serializers.ModelSerializer):
-    customer = CustomerSerializer(source='customers', many=True)
+    customer = CustomerCreateSerializer(source='customers', many=True)
     class Meta:
         model = Campaign
         fields = ('name','description','service_provider','service_platforms','customer')
@@ -65,14 +68,27 @@ class CampaignSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         print(validated_data)
         customers_data = validated_data.pop('customers', [])
-        print(customers_data)
         campaign = Campaign.objects.create(**validated_data)
-        print("Campaign created",campaign)
         for customer_data in customers_data:
             try:
                 customer =  Customer.objects.create(**customer_data)
                 customer.campaign.set([campaign])
             except Exception as e:
                 print(f"Error creating customer: {e}")
-
         return campaign
+    
+
+class ServicePlatformsListSerializer(serializers.ModelSerializer):
+    platform = PlatformSerializer()
+    class Meta:
+        model = ServicePlatforms
+        fields = ('id','created_at','platform','credentials') 
+
+class CampaignListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campaign
+        fields = ('id','name','description','service_platforms',)
+    
+
+
+        
