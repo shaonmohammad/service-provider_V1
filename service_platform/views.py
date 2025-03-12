@@ -62,11 +62,13 @@ class CustomerListAPIView(ListAPIView):
         campaign_id = self.kwargs.get("campaign_id")
         service_platform_id = self.kwargs.get("service_platform_id")
 
-        try:
-            return Customer.objects.filter(
-                campaign__service_provider=self.request.user, 
-                campaign__id=campaign_id,
-                campaign__service_platforms__id=service_platform_id
-            )
-        except Customer.DoesNotExist:
-            return []
+        queryset = Customer.objects.filter(
+            campaign__service_provider=self.request.user,
+            campaign__id=campaign_id,
+            campaign__service_platforms__id=service_platform_id
+        ).select_related('campaign').prefetch_related('campaign__service_platforms')
+
+        if not queryset.exists():
+            return Customer.objects.none()
+        
+        return queryset
