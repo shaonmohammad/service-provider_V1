@@ -46,7 +46,7 @@ class CampaignSerializer(serializers.ModelSerializer):
     customer = CustomerCreateSerializer(source='customers', many=True)
     class Meta:
         model = Campaign
-        fields = ('name','description','service_provider','service_platforms','customer')
+        fields = ('name','description','service_provider','service_platforms','communication_method','customer')
     
     def to_internal_value(self, data):
         """Custom validation to check if service_provider and service_platform exist before default validation."""
@@ -85,9 +85,28 @@ class ServicePlatformsListSerializer(serializers.ModelSerializer):
         fields = ('id','created_at','platform','credentials') 
 
 class CampaignListSerializer(serializers.ModelSerializer):
+    platform = serializers.SerializerMethodField()
     class Meta:
         model = Campaign
-        fields = ('id','name','description','service_platforms',)
+        fields = ('id','name','description','service_platforms','platform')
+    
+    def get_platform(self,obj):
+        return obj.service_platforms.platform.name if obj.service_platforms.platform else None
+    
+   
+    
+class CampaignDetailsSerializer(serializers.ModelSerializer):
+    platform = serializers.SerializerMethodField()
+    customer = CustomerListSerializer(many=True, read_only=True, source="customers")
+    class Meta:
+        model = Campaign
+        fields = ('id','name','description','service_platforms','platform','customer')
+    
+    def get_platform(self,obj):
+        return obj.service_platforms.platform.name if obj.service_platforms.platform else None
+    
+    def get_customer(self, obj):
+        return  obj.customers.all() if obj.customers else []
     
 
 

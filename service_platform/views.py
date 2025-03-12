@@ -1,4 +1,4 @@
-from rest_framework.generics import ListCreateAPIView,CreateAPIView,ListAPIView
+from rest_framework.generics import ListCreateAPIView,CreateAPIView,ListAPIView,RetrieveAPIView
 from rest_framework import permissions
 from .models import (
     Platform,
@@ -11,7 +11,8 @@ from .serializers import (
     CampaignSerializer,
     CampaignListSerializer,
     ServicePlatformsListSerializer,
-    CustomerListSerializer
+    CustomerListSerializer,
+    CampaignDetailsSerializer
     )
 
 # Handles both GET (list) and POST (create)
@@ -52,6 +53,23 @@ class CampaignListAPIView(ListAPIView):
 
         try:
             return Campaign.objects.filter(
+                service_provider=self.request.user,
+                service_platforms__id=service_platform_id
+            )
+        except Campaign.DoesNotExist:
+            return []
+class CampaignDetailsAPIView(ListAPIView):
+    serializer_class = CampaignDetailsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+
+    def get_queryset(self): 
+        campaign_id = self.kwargs.get("campaign_id")
+        service_platform_id = self.kwargs.get("service_platform_id")
+
+        try:
+            return Campaign.objects.filter(
+                id=campaign_id,
                 service_provider=self.request.user,
                 service_platforms__id=service_platform_id
             )

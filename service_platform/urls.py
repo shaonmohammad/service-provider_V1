@@ -5,7 +5,8 @@ from .views import (
     ServicePlatformListView,
     CampaignCreateAPIView,
     CampaignListAPIView,
-    CustomerListAPIView
+    CustomerListAPIView,
+    CampaignDetailsAPIView
     )
 
 urlpatterns = [
@@ -15,6 +16,7 @@ urlpatterns = [
 
     path('service_platforms/campaigns/', CampaignCreateAPIView.as_view(), name='campaign-create'), 
     path('service_platforms/<int:service_platform_id>/campaigns/',CampaignListAPIView.as_view(), name='campaign-list'),
+    path('service_platforms/<int:service_platform_id>/campaigns/<int:campaign_id>/',CampaignDetailsAPIView.as_view(), name='campaign-details'),
     path('service_platforms/<int:service_platform_id>/campaigns/<int:campaign_id>/customers/',CustomerListAPIView.as_view(), name='customer-list'),
 
 ]

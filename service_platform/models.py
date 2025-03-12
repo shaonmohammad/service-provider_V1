@@ -26,10 +26,21 @@ class ServicePlatforms(TimestampMixin):
 
 
 class Campaign(TimestampMixin):
+    SMS = 'SMS'
+    EMAIL = 'Email'
+    WHATSAPP = 'WhatsApp'
+
+    COMMUNICATION_CHOICES = [
+        (SMS, 'SMS'),
+        (EMAIL, 'Email'),
+        (WHATSAPP, 'WhatsApp'),
+    ]
+    
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     service_platforms = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
     service_provider =  models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    communication_method = models.CharField(max_length=10, choices=COMMUNICATION_CHOICES, default=SMS)
     class Meta:
         verbose_name = "Campaign"
         verbose_name_plural = "Campaigns"

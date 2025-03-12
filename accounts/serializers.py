@@ -36,4 +36,5 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             country = validated_data['country'],
             profile_picture = validated_data['profile_picture']
         )
+        
         return user
