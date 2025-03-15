@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import ServicePlatforms,Platform,Campaign,Customer
 from accounts.models import CustomUser
+from .messages import send_bulk_email,send_twilio_message
 class PlatformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Platform
@@ -66,15 +67,48 @@ class CampaignSerializer(serializers.ModelSerializer):
     
     
     def create(self, validated_data):
-        print(validated_data)
         customers_data = validated_data.pop('customers', [])
         campaign = Campaign.objects.create(**validated_data)
+
+        recipient_list_sms = []
+        recipient_list_whatsapp = []
+        recipient_list_email = []
+
         for customer_data in customers_data:
             try:
                 customer =  Customer.objects.create(**customer_data)
                 customer.campaign.set([campaign])
+
+                 # Extract phone number & email
+                phone_number = customer.phone_number
+                email = customer.email
+
+                # Categorize recipients based on communication method
+                if validated_data.get("communication_method") == "SMS" and phone_number:
+                    recipient_list_sms.append(phone_number)
+                elif validated_data.get("communication_method") == "WhatsApp" and phone_number:
+                    recipient_list_whatsapp.append(phone_number)
+                elif validated_data.get("communication_method") == "Email" and email:
+                    recipient_list_email.append(email)
+
             except Exception as e:
                 print(f"Error creating customer: {e}")
+        
+         # **Send Bulk Messages Based on Method**
+        campaign_message = "Your campaign update is here!"
+        email_subject = "Campaign Notification"
+
+        if recipient_list_sms:
+            for recipient in recipient_list_sms:
+                send_twilio_message.delay(recipient, campaign_message, "SMS")
+
+        if recipient_list_whatsapp:
+            for recipient in recipient_list_whatsapp:
+                send_twilio_message.delay(recipient, campaign_message, "WhatsApp")
+
+        if recipient_list_email:
+            send_bulk_email.delay(recipient_list_email, email_subject, campaign_message)
+
         return campaign
     
 

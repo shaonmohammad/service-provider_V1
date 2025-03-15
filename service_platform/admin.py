@@ -35,7 +35,7 @@ class CampaignAdmin(admin.ModelAdmin):
     list_filter = ('service_provider',)
 
     def get_service_provider(self, obj):
-        return f'{obj.service_provider.first_name} {obj.service_provider.last_name}' if obj.service_provider.first_name else ''
+        return obj.service_provider.email if obj.service_provider else ''
     get_service_provider.short_description = 'Service Providers'
 
     def get_service_platforms(self, obj):
