@@ -1,9 +1,9 @@
 from twilio.rest import Client
 from django.conf import settings
-from celery import shared_task
+# from celery import shared_task
 from django.core.mail import send_mail
 
-@shared_task(bind=True, max_retries=3)
+# @shared_task(bind=True, max_retries=3)
 def send_twilio_message(self, recipient, message, method):
     """Send SMS or WhatsApp message using Twilio"""
     try:
@@ -27,7 +27,7 @@ def send_twilio_message(self, recipient, message, method):
         raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed
 
 
-@shared_task(bind=True, max_retries=3)
+# @shared_task(bind=True, max_retries=3)
 def send_bulk_email(self, recipients, subject, message):
     """Send bulk emails using Django's SMTP"""
     try:

@@ -132,15 +132,24 @@ class CampaignListSerializer(serializers.ModelSerializer):
 class CampaignDetailsSerializer(serializers.ModelSerializer):
     platform = serializers.SerializerMethodField()
     customer = CustomerListSerializer(many=True, read_only=True, source="customers")
+    total_review_given = serializers.SerializerMethodField()
+
     class Meta:
         model = Campaign
-        fields = ('id','name','description','service_platforms','platform','customer')
+        fields = ('id','name','description','service_platforms','platform','total_review_given','customer')
     
     def get_platform(self,obj):
         return obj.service_platforms.platform.name if obj.service_platforms.platform else None
     
     def get_customer(self, obj):
         return  obj.customers.all() if obj.customers else []
+    
+    def get_total_review_given(self,obj):
+        return Customer.objects.filter(
+            campaign=obj,
+            # campaign__service_provider = self.request.user,
+            is_given_review = True                           
+            ).count()
     
 
 
