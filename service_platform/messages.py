@@ -28,17 +28,19 @@ def send_twilio_message(self, recipient, message, method):
 
 
 # @shared_task(bind=True, max_retries=3)
-def send_bulk_email(self, recipients, subject, message):
+def send_bulk_email(recipients, subject, message):
     """Send bulk emails using Django's SMTP"""
     try:
+        print(recipients,subject,message,settings.EMAIL_HOST_USER)
         send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email=settings.EMAIL_HOST_USER,
             recipient_list=recipients,
             fail_silently=False,
         )
-        return "Emails sent successfully!"
+        print("Emails sent successfully!")
+        return True
     except Exception as e:
         print(f"Error sending emails: {e}")
-        raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed
+        # raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed

@@ -164,14 +164,16 @@ TWILIO_AUTH_TOKEN = "your_auth_token"
 TWILIO_PHONE_NUMBER = ""
 TWILIO_WHATSAPP_NUMBER = ""
 
+
 # Email SMTP Config
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.yourmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "your_email@example.com"
-EMAIL_HOST_PASSWORD = "your_password"
-DEFAULT_FROM_EMAIL = "Your Company <your_email@example.com>"
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_BACKEND = "django_ses.SESBackend"
+AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME')
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_PORT = env('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', cast=bool, default=True)
 
 # JWT Configuration
 SIMPLE_JWT = {

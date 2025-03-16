@@ -36,7 +36,14 @@ class ServicePlatformsCreateSerializer(serializers.ModelSerializer):
 class CustomerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
-        fields = ['name', 'email', 'phone_number', 'address','is_sent_email','is_given_review']
+        fields = [
+            'name',
+            'email',
+            'phone_number',
+            'address',
+            'is_sent_email',
+            'is_given_review'
+            ]
 
 class CustomerCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,7 +54,16 @@ class CampaignSerializer(serializers.ModelSerializer):
     customer = CustomerCreateSerializer(source='customers', many=True)
     class Meta:
         model = Campaign
-        fields = ('name','description','service_provider','service_platforms','communication_method','customer')
+        fields = (
+            'name',
+            'created_at',
+            'updated_at',
+            'description',
+            'service_provider',
+            'service_platforms',
+            'communication_method',
+            'customer'
+            )
     
     def to_internal_value(self, data):
         """Custom validation to check if service_provider and service_platform exist before default validation."""
@@ -107,7 +123,7 @@ class CampaignSerializer(serializers.ModelSerializer):
                 send_twilio_message.delay(recipient, campaign_message, "WhatsApp")
 
         if recipient_list_email:
-            send_bulk_email.delay(recipient_list_email, email_subject, campaign_message)
+            send_bulk_email(recipient_list_email, email_subject, campaign_message)
 
         return campaign
     
@@ -116,13 +132,26 @@ class ServicePlatformsListSerializer(serializers.ModelSerializer):
     platform = PlatformSerializer()
     class Meta:
         model = ServicePlatforms
-        fields = ('id','created_at','platform','credentials') 
+        fields = (
+            'id',
+            'created_at',
+            'platform',
+            'credentials'
+            ) 
 
 class CampaignListSerializer(serializers.ModelSerializer):
     platform = serializers.SerializerMethodField()
     class Meta:
         model = Campaign
-        fields = ('id','name','description','service_platforms','platform')
+        fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'name',
+            'description',
+            'service_platforms',
+            'platform'
+        )
     
     def get_platform(self,obj):
         return obj.service_platforms.platform.name if obj.service_platforms.platform else None
@@ -136,7 +165,16 @@ class CampaignDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Campaign
-        fields = ('id','name','description','service_platforms','platform','total_review_given','customer')
+        fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'name','description',
+            'service_platforms',
+            'platform',
+            'total_review_given',
+            'customer'
+            )
     
     def get_platform(self,obj):
         return obj.service_platforms.platform.name if obj.service_platforms.platform else None
