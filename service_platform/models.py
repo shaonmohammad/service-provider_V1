@@ -56,6 +56,7 @@ class Customer(TimestampMixin):
     phone_number = models.CharField(max_length=15,null=True,blank=True)
     address = models.TextField(null=True,blank=True)
     is_sent_email = models.BooleanField(default=False) 
+    is_sent_sms = models.BooleanField(default=False)
     is_given_review = models.BooleanField(default=False)
     class Meta:
         verbose_name = "Customer"

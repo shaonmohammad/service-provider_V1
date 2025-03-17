@@ -2,6 +2,7 @@ from twilio.rest import Client
 from django.conf import settings
 # from celery import shared_task
 from django.core.mail import send_mail
+from .models import Customer    
 
 # @shared_task(bind=True, max_retries=3)
 def send_twilio_message(self, recipient, message, method):
@@ -20,6 +21,7 @@ def send_twilio_message(self, recipient, message, method):
             from_=from_number,
             to=recipient
         )
+        Customer.objects.filter(phone_number=recipient).update(is_sent_sms=True)
 
         return response.sid  # Return Twilio message ID for logging
     except Exception as e:
@@ -39,8 +41,9 @@ def send_bulk_email(recipients, subject, message):
             recipient_list=recipients,
             fail_silently=False,
         )
+        Customer.objects.filter(email__in=recipients).update(is_sent_email=True)
         print("Emails sent successfully!")
-        return True
+        return "Emails sent successfully!"
     except Exception as e:
         print(f"Error sending emails: {e}")
         # raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed
