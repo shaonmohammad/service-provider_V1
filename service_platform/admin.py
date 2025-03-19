@@ -3,7 +3,8 @@ from .models import (
     Platform,
     ServicePlatforms,
     Customer,
-    Campaign
+    Campaign,
+    CampaignMessage
     )
 
 @admin.register(Platform)
@@ -41,3 +42,7 @@ class CampaignAdmin(admin.ModelAdmin):
     def get_service_platforms(self, obj):
         return obj.service_platforms.platform
     get_service_platforms.short_description = 'Service Platforms'
+
+@admin.register(CampaignMessage)
+class CampaignMessageAdmin(admin.ModelAdmin):
+    pass

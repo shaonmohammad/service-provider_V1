@@ -64,3 +64,17 @@ class Customer(TimestampMixin):
     
     def __str__(self):
         return self.name
+    
+class CampaignMessage(models.Model):
+    COMMUNICATION_CHOICES = [
+        ('Email', 'Email'),
+        ('SMS', 'SMS'),
+        ('WhatsApp', 'WhatsApp'),
+    ]
+    
+    subject = models.CharField(max_length=255, null=True, blank=True)  # Only applicable for emails
+    message = models.TextField()
+    communication_type = models.CharField(max_length=10, choices=COMMUNICATION_CHOICES)
+    
+    def __str__(self):
+        return f"{self.communication_type} - {self.subject or 'No Subject'}"

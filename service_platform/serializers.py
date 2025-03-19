@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ServicePlatforms,Platform,Campaign,Customer
+from .models import ServicePlatforms,Platform,Campaign,Customer,CampaignMessage
 from accounts.models import CustomUser
 from .messages import send_bulk_email,send_twilio_message
 class PlatformSerializer(serializers.ModelSerializer):
@@ -110,20 +110,25 @@ class CampaignSerializer(serializers.ModelSerializer):
             except Exception as e:
                 print(f"Error creating customer: {e}")
         
-         # **Send Bulk Messages Based on Method**
-        campaign_message = "Your campaign update is here!"
-        email_subject = "Campaign Notification"
+        
+        # Fetch messages based on communication type
+        email_message_obj = CampaignMessage.objects.filter(communication_type='Email').first()
+        sms_message_obj = CampaignMessage.objects.filter(communication_type='SMS').first()
+        whatsapp_message_obj = CampaignMessage.objects.filter(communication_type='WhatsApp').first()
 
-        if recipient_list_sms:
+        # Send SMS messages
+        if recipient_list_sms and sms_message_obj:
             for recipient in recipient_list_sms:
-                send_twilio_message.delay(recipient, campaign_message, "SMS")
+                send_twilio_message.delay(recipient, sms_message_obj.message, "SMS")
 
-        if recipient_list_whatsapp:
+        # Send WhatsApp messages
+        if recipient_list_whatsapp and whatsapp_message_obj:
             for recipient in recipient_list_whatsapp:
-                send_twilio_message.delay(recipient, campaign_message, "WhatsApp")
+                send_twilio_message.delay(recipient, whatsapp_message_obj.message, "WhatsApp")
 
-        if recipient_list_email:
-            send_bulk_email(recipient_list_email, email_subject, campaign_message)
+        # Send Emails
+        if recipient_list_email and email_message_obj:
+            send_bulk_email(recipient_list_email, email_message_obj.subject, email_message_obj.message)
 
         return campaign
     
