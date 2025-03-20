@@ -81,3 +81,16 @@ class CampaignMessage(models.Model):
     
     def __str__(self):
         return f"{self.communication_type} - {self.subject or 'No Subject'}"
+    
+class CustomerReview(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='review_of_campaign')
+    rating = models.IntegerField()
+    review_text = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Review by {self.customer} on {self.campaign}"
+    class Meta:
+        verbose_name = "Customer Review"
+        verbose_name_plural = "Customer Reviews"
+    

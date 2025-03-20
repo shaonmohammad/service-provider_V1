@@ -117,21 +117,21 @@ class CampaignSerializer(serializers.ModelSerializer):
         whatsapp_message_obj = CampaignMessage.objects.filter(communication_type='WhatsApp').first()
 
         # fetch platform link form platform model based on user input 
-        platform_link =  f"Review Link: {campaign.service_platforms.platform.platform_link}"
+        # platform_link =  f"Review Link: {campaign.service_platforms.platform.platform_link}"
 
         # Send SMS messages
         if recipient_list_sms and sms_message_obj:
             for recipient in recipient_list_sms:
-                send_twilio_message(recipient, sms_message_obj.message + platform_link , "SMS")
+                send_twilio_message.delay(recipient, sms_message_obj.message  , "SMS")
 
         # Send WhatsApp messages
         if recipient_list_whatsapp and whatsapp_message_obj:
             for recipient in recipient_list_whatsapp:
-                send_twilio_message.delay(recipient, whatsapp_message_obj.message + platform_link, "WhatsApp")
+                send_twilio_message.delay(recipient, whatsapp_message_obj.message , "WhatsApp")
 
         # Send Emails
         if recipient_list_email and email_message_obj:
-            send_bulk_email(recipient_list_email, email_message_obj.subject, email_message_obj.message + platform_link)
+            send_bulk_email.delay(recipient_list_email, email_message_obj.subject, email_message_obj.message)
 
         return campaign
     
