@@ -1,8 +1,12 @@
+import logging
 from twilio.rest import Client
 from django.conf import settings
 from celery import shared_task
 from django.core.mail import send_mail
 from .models import Customer    
+
+logger = logging.getLogger(__name__)
+
 
 @shared_task(bind=True, max_retries=3)
 def send_twilio_message(self, recipient, message, method):
@@ -32,6 +36,7 @@ def send_twilio_message(self, recipient, message, method):
 @shared_task(bind=True, max_retries=3)
 def send_bulk_email(self,recipients, subject, message):
     """Send bulk emails using Django's SMTP"""
+    print("Message of Email: " + message)
     try:
         send_mail(
             subject=subject,

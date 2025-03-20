@@ -4,6 +4,9 @@ from accounts.models import TimestampMixin,CustomUser
 
 class Platform(TimestampMixin):
     name = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    logo = models.ImageField(upload_to='platforms/', null=True, blank=True)
+    platform_link = models.URLField(null=True, blank=True)
     class Meta:
         verbose_name = "Platform"
         verbose_name_plural = "Platforms"
