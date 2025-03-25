@@ -4,7 +4,8 @@ from .models import (
     ServicePlatforms,
     Customer,
     Campaign,
-    CampaignMessage
+    CampaignMessage,
+    CustomerReview
     )
 
 @admin.register(Platform)
@@ -46,3 +47,7 @@ class CampaignAdmin(admin.ModelAdmin):
 @admin.register(CampaignMessage)
 class CampaignMessageAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(CustomerReview)
+class CustomerReviewAdmin(admin.ModelAdmin):
+    list_display = ('campaign__service_provider','customer','campaign','rating')

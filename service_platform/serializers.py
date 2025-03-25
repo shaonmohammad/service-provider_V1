@@ -1,7 +1,15 @@
 from rest_framework import serializers
-from .models import ServicePlatforms,Platform,Campaign,Customer,CampaignMessage
+from service_review_v1 import settings
 from accounts.models import CustomUser
 from .messages import send_bulk_email,send_twilio_message
+from .models import (
+    ServicePlatforms,
+    Platform,Campaign,
+    Customer,
+    CampaignMessage,
+    CustomerReview
+    )
+
 class PlatformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Platform
@@ -116,8 +124,13 @@ class CampaignSerializer(serializers.ModelSerializer):
         sms_message_obj = CampaignMessage.objects.filter(communication_type='SMS').first()
         whatsapp_message_obj = CampaignMessage.objects.filter(communication_type='WhatsApp').first()
 
-        # fetch platform link form platform model based on user input 
-        # platform_link =  f"Review Link: {campaign.service_platforms.platform.platform_link}"
+        # Create URL for Campaign Review 
+        print("Trying to create url")
+        request = self.context.get("request")
+        base_url = request.build_absolute_uri('/') 
+       
+        campaign_review_url = f"{base_url}/service-review/campaigns/{campaign.id}/customers_review/"
+        print(campaign_review_url)
 
         # Send SMS messages
         if recipient_list_sms and sms_message_obj:
@@ -199,4 +212,36 @@ class CampaignDetailsSerializer(serializers.ModelSerializer):
     
 
 
-        
+class CustomerReviewCreateSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True,write_only=True)
+    class Meta:
+        model = CustomerReview
+        fields = ('email','rating', 'review_text')
+
+        def validate_email(self, value):
+            if not value:
+                raise serializers.ValidationError("Email is required.")
+            
+            if not CustomUser.objects.filter(email=value).exists():
+                raise serializers.ValidationError("Email not found.")
+            return value
+
+    def create(self, validated_data):
+        email = validated_data.pop('email', None)
+        customer = Customer.objects.filter(email=email).last()
+
+        request = self.context.get("request")
+        campaign_id = request.parser_context['kwargs'].get('campaign_id')
+        campaign = Campaign.objects.get(id=campaign_id)
+        print(campaign_id)
+
+        customer_review = CustomerReview.objects.create(
+            customer=customer,
+            campaign = campaign,
+            rating=validated_data['rating'],
+            review_text=validated_data['review_text']
+        )
+        if customer_review:
+            customer.is_given_review = True
+            customer.save()
+        return customer_review

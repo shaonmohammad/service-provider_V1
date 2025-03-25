@@ -4,7 +4,9 @@ from .models import (
     Platform,
     ServicePlatforms,
     Campaign,
-    Customer)
+    Customer,
+    CustomerReview
+    )
 from .serializers import (
     PlatformSerializer,
     ServicePlatformsCreateSerializer,
@@ -12,7 +14,8 @@ from .serializers import (
     CampaignListSerializer,
     ServicePlatformsListSerializer,
     CustomerListSerializer,
-    CampaignDetailsSerializer
+    CampaignDetailsSerializer,
+    CustomerReviewCreateSerializer
     )
 
 # Handles both GET (list) and POST (create)
@@ -93,3 +96,8 @@ class CustomerListAPIView(ListAPIView):
             return Customer.objects.none()
         
         return queryset
+
+class CreateCustomerReview(CreateAPIView):
+    queryset = CustomerReview.objects.all()
+    serializer_class = CustomerReviewCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
