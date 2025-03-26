@@ -1,4 +1,5 @@
 from rest_framework.generics import ListCreateAPIView,CreateAPIView,ListAPIView,RetrieveAPIView
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 from .models import (
     Platform,
@@ -82,6 +83,9 @@ class CampaignDetailsAPIView(ListAPIView):
 class CustomerListAPIView(ListAPIView):
     serializer_class = CustomerListSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends= [DjangoFilterBackend]
+    filterset_fields = ['is_given_review','is_sent_email']
+
     def get_queryset(self):
         campaign_id = self.kwargs.get("campaign_id")
         service_platform_id = self.kwargs.get("service_platform_id")
