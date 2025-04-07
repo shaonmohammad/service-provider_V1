@@ -47,6 +47,8 @@ class CampaignCreateAPIView(ListCreateAPIView):
 
     def get_queryset(self):
         return Campaign.objects.filter(service_provider=self.request.user)
+    
+    
 
 class CampaignListAPIView(ListAPIView):
     serializer_class = CampaignListSerializer

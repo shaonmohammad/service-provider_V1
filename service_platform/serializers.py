@@ -1,3 +1,4 @@
+import pandas as pd
 from rest_framework import serializers
 from service_review_v1 import settings
 from accounts.models import CustomUser
@@ -59,7 +60,9 @@ class CustomerCreateSerializer(serializers.ModelSerializer):
         fields = ['name', 'email', 'phone_number', 'address']
     
 class CampaignSerializer(serializers.ModelSerializer):
-    customer = CustomerCreateSerializer(source='customers', many=True)
+    # customer = CustomerCreateSerializer(source='customers', many=True)
+    customers_data = serializers.FileField(write_only=True, required=True)
+    
     class Meta:
         model = Campaign
         fields = (
@@ -70,7 +73,8 @@ class CampaignSerializer(serializers.ModelSerializer):
             'service_provider',
             'service_platforms',
             'communication_method',
-            'customer'
+            # 'customer',
+            'customers_data',
             )
     
     def to_internal_value(self, data):
@@ -91,32 +95,71 @@ class CampaignSerializer(serializers.ModelSerializer):
     
     
     def create(self, validated_data):
-        customers_data = validated_data.pop('customers', [])
-        campaign = Campaign.objects.create(**validated_data)
-
         recipient_list_sms = []
         recipient_list_whatsapp = []
         recipient_list_email = []
 
-        for customer_data in customers_data:
+        # customers_data = validated_data.pop('customers', [])
+        customers_data = validated_data.pop('customers_data', [])
+        print("Customers data",customers_data)
+        campaign = Campaign.objects.create(**validated_data)
+
+        if customers_data:
             try:
-                customer =  Customer.objects.create(**customer_data)
-                customer.campaign.set([campaign])
+                if customers_data.name.endswith('.csv'):
+                    df = pd.read_csv(customers_data)
+                elif customers_data.name.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(customers_data)
+                else:
+                    raise serializers.ValidationError("Unsupported file format.")
+                
+                for _, row in df.iterrows():
+                    customer = Customer.objects.create(
+                        name=row['name'],
+                        email=row['email'],
+                        phone_number=row['phone_number']
+                        # Add other fields as needed
+                    )
+                    print(f"Created customer: {customer}")
+                    customer.campaign.set([campaign])
 
-                 # Extract phone number & email
-                phone_number = customer.phone_number
-                email = customer.email
+                    # Extract phone number & email
+                    phone_number = customer.phone_number
+                    email = customer.email
 
-                # Categorize recipients based on communication method
-                if validated_data.get("communication_method") == "SMS" and phone_number:
-                    recipient_list_sms.append(phone_number)
-                elif validated_data.get("communication_method") == "WhatsApp" and phone_number:
-                    recipient_list_whatsapp.append(phone_number)
-                elif validated_data.get("communication_method") == "Email" and email:
-                    recipient_list_email.append(email)
+                    # Categorize recipients based on communication method
+                    if validated_data.get("communication_method") == "SMS" and phone_number:
+                        recipient_list_sms.append(phone_number)
+                    elif validated_data.get("communication_method") == "WhatsApp" and phone_number:
+                        recipient_list_whatsapp.append(phone_number)
+                    elif validated_data.get("communication_method") == "Email" and email:
+                        recipient_list_email.append(email)
 
             except Exception as e:
-                print(f"Error creating customer: {e}")
+                raise serializers.ValidationError(f"Customer Data processing error: {str(e)}")
+        else:
+            raise serializers.ValidationError("No customer data provided.")
+
+
+        # for customer_data in customers_data:
+        #     try:
+        #         customer =  Customer.objects.create(**customer_data)
+        #         customer.campaign.set([campaign])
+
+        #          # Extract phone number & email
+        #         phone_number = customer.phone_number
+        #         email = customer.email
+
+        #         # Categorize recipients based on communication method
+        #         if validated_data.get("communication_method") == "SMS" and phone_number:
+        #             recipient_list_sms.append(phone_number)
+        #         elif validated_data.get("communication_method") == "WhatsApp" and phone_number:
+        #             recipient_list_whatsapp.append(phone_number)
+        #         elif validated_data.get("communication_method") == "Email" and email:
+        #             recipient_list_email.append(email)
+
+        #     except Exception as e:
+        #         print(f"Error creating customer: {e}")
         
         
         # Fetch messages based on communication type
