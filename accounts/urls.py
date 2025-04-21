@@ -2,9 +2,8 @@ from django.urls import path
 from rest_framework_simplejwt import views as jwt_views 
 from .views import (
     RegistrationView,
-    # google_auth_init,
-    # google_auth_callback,
-    # get_google_reviews,
+    GoogleLoginInitView,
+    GoogleLoginCallbackView
 
 )
 # from .google_auth import google_login,google_callback
@@ -15,13 +14,7 @@ urlpatterns = [
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name ='token_refresh'), 
 
     # Login with Google
-    # path("dj-rest-auth/google/login/", GoogleLoginView.as_view(), name="google_login"),
-
-    # # Google OAuth2
-    # path('api/google/login/', google_login, name='google_login'),
-    # # path('api/google/init/', google_auth_init),
-    # path('api/google/callback/', google_callback),
-    # path('api/google/reviews/', get_google_reviews),
-
+     path('api/google/login/', GoogleLoginInitView.as_view()),
+     path('api/google/callback/', GoogleLoginCallbackView.as_view()),
     
 ]
