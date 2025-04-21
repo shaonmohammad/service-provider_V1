@@ -1,17 +1,21 @@
+from django.conf import settings
+from urllib.parse import urlencode
+
+import requests
+
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view,permission_classes
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import CustomUser
 from .serializers import UserRegistrationSerializer
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import redirect
-from django.conf import settings
-# from .google_auth import get_auth_flow, save_credentials_to_user,build_credentials
-from django.http import JsonResponse
-import googleapiclient.discovery
-import requests
-from google.auth.transport.requests import Request
 
 
+GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
+REDIRECT_URI = 'http://localhost:8000/accounts/api/google/callback/'
 
 
 @api_view(['POST'])
@@ -25,73 +29,64 @@ def RegistrationView(request):
                 'user': serializer.data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET'])
-# # @permission_classes([IsAuthenticated]) 
-# def google_auth_init(request):
-#     flow = get_auth_flow()
-#     auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
-#     return JsonResponse({'auth_url': auth_url})
-
-
-
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def get_google_reviews(request):
-#     credentials = build_credentials(request.user)
-#     if not credentials:
-#         return JsonResponse({'error': 'Google account not connected'}, status=403)
-
-#     # Refresh token if needed
-#     if credentials.expired and credentials.refresh_token:
-#         credentials.refresh(Request())
-
-#     access_token = credentials.token
-#     print("Access token:",access_token)
-#     headers = {
-#         'Authorization': f'Bearer {access_token}'
-#     }
-
-#     # Step 1: Get accounts
-#     account_url = 'https://mybusinessaccountmanagement.googleapis.com/v1/accounts'
-#     response = requests.get(account_url, headers=headers)
-#     print(response)
-#     if response.status_code != 200:
-#         # print("Error URL:", locations_url)
-#         print("Error status:", response.status_code)
-#         print("Error response:", response.json())
-#         return Response(response.json())
-
     
-#     accounts = response.json().get('accounts', [])
-    
-#     if not accounts:
-#         return JsonResponse({'error': 'No Google business accounts found'}, status=404)
 
-#     account_name = accounts[0]['name']  # like "accounts/123456789"
 
-#     # https://mybusinessbusinessinformation.googleapis.com/v1/{account_name}/locations?readMask=name
-#     # Step 2: Get locations
-#     locations_url = f'https://mybusinessbusinessinformation.googleapis.com/v1/{account_name}/locations?readMask=name'
-#     response = requests.get(locations_url, headers=headers)
-#     if response.status_code != 200:
-#         return JsonResponse({'error': 'Failed to fetch locations', 'details': response.json()}, status=500)
+class GoogleLoginInitView(APIView):
+    def get(self,request):
+        google_auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
+        params = {
+            "client_id": GOOGLE_CLIENT_ID,
+            "redirect_uri": REDIRECT_URI,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "access_type": "offline",
+            "prompt": "consent"
+        }
+        return Response({"auth_url": f"{google_auth_url}?{urlencode(params)}"})
 
-#     locations = response.json().get('locations', [])
-#     reviews_all = []
 
-#     # Step 3: For each location, get reviews
-#     for loc in locations:
-#         location_name = loc['name']  # like "accounts/123456789/locations/987654321"
-#         review_url = f'https://mybusiness.googleapis.com/v4/{location_name}/reviews'
-#         response = requests.get(review_url, headers=headers)
-#         reviews = response.json().get('reviews', []) if response.status_code == 200 else []
-#         reviews_all.append({
-#             'location': location_name,
-#             'reviews': reviews
-#         })
+class GoogleLoginCallbackView(APIView):
+    def get(self, request):
+        code = request.query_params.get("code")
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            "code": code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uri": REDIRECT_URI,
+            "grant_type": "authorization_code"
+        }
+        r = requests.post(token_url, data=data)
+        token_info = r.json()
+        id_token = token_info.get("id_token")
 
-#     return JsonResponse({'reviews': reviews_all})
+        # You can decode the id_token to get user info
+        user_info = requests.get(
+            "https://openidconnect.googleapis.com/v1/userinfo",
+            headers={"Authorization": f"Bearer {token_info['access_token']}"}
+        ).json()
+
+        # Now you can create or log in the user
+        try:
+            user = CustomUser.objects.get(email=user_info['email'])
+        except CustomUser.DoesNotExist:
+            CustomUser.objects.create_user(
+                first_name = user_info['given_name'],
+                last_name = user_info['family_name'],
+                full_name = f"{user_info['given_name']} {user_info['family_name']}",
+                email = user_info['email'],
+                profile_picture = user_info['picture']
+            )
+            return Response(user_info)   
+        
+        refresh = RefreshToken.for_user(user)
+       
+        return Response({
+            "Access Token": str(refresh.access_token),
+            "Refresh Token": str(refresh),
+        })
+
+
 
 
