@@ -43,20 +43,25 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django.contrib.sites',
+    'django.contrib.sites',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+    
     
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'dj_rest_auth.registration',
 
 
     'accounts',
     'service_platform',
     'django_filters',
 ]
+# django.contrib.sites
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -89,16 +94,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'service_review_v1.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 
 # Database
@@ -169,6 +164,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
+
 # Twilio Config
 TWILIO_ACCOUNT_SID = "your_account_sid"
 TWILIO_AUTH_TOKEN = "your_auth_token"
@@ -202,7 +198,13 @@ CELERY_TASK_SERIALIZER = 'json'
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 
 # import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+# ACCOUNT_AUTHENTICATION_METHOD = "email"  # Use Email / Password authentication
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_VERIFICATION = "none" # Do not require email confirmation
