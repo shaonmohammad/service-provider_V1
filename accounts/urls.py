@@ -3,7 +3,8 @@ from rest_framework_simplejwt import views as jwt_views
 from .views import (
     RegistrationView,
     GoogleLoginInitView,
-    GoogleLoginCallbackView
+    GoogleLoginCallbackView,
+    GoogleReviewsView
 
 )
 # from .google_auth import google_login,google_callback
@@ -13,8 +14,9 @@ urlpatterns = [
     path('api/token/', jwt_views.TokenObtainPairView.as_view(), name ='token_obtain_pair'), 
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name ='token_refresh'), 
 
-    # Login with Google
+    # Login with Google and Retrive Reviews
      path('api/google/login/', GoogleLoginInitView.as_view()),
      path('api/google/callback/', GoogleLoginCallbackView.as_view()),
+     path('api/google/reviews/',GoogleReviewsView.as_view()),
     
 ]

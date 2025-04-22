@@ -28,11 +28,6 @@ class CustomUser(AbstractBaseUser,TimestampMixin, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    # Google OAuth2 fields
-    google_access_token = models.TextField(null=True, blank=True)
-    google_refresh_token = models.TextField(null=True, blank=True)
-    token_expiry = models.DateTimeField(null=True, blank=True)
-
     objects = CustomUserManager()
     USERNAME_FIELD = 'email'
     # REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -45,6 +40,14 @@ class CustomUser(AbstractBaseUser,TimestampMixin, PermissionsMixin):
         return self.email
     
 
+class GoogleToken(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    access_token = models.TextField()
+    refresh_token = models.TextField()
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return ''
 
 
 

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser
+from .models import CustomUser,GoogleToken
 from .manager import CustomUserManager
 
 class CustomUserAdmin(admin.ModelAdmin):
@@ -8,5 +8,8 @@ class CustomUserAdmin(admin.ModelAdmin):
     search_fields = ('email', 'business_name', 'phone_number')
 
 admin.site.register(CustomUser, CustomUserAdmin)
+class GoogleTokenAdmin(admin.ModelAdmin):
+    list_display = ("user",'access_token','refresh_token','expires_at')
 
+admin.site.register(GoogleToken, GoogleTokenAdmin)
 

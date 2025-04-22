@@ -2,14 +2,17 @@ from django.conf import settings
 from urllib.parse import urlencode
 
 import requests
+from datetime import datetime, timedelta
 
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import CustomUser
+from .models import CustomUser,GoogleToken
 from .serializers import UserRegistrationSerializer
 
 
@@ -39,7 +42,7 @@ class GoogleLoginInitView(APIView):
             "client_id": GOOGLE_CLIENT_ID,
             "redirect_uri": REDIRECT_URI,
             "response_type": "code",
-            "scope": "openid email profile",
+            "scope": "openid email profile https://www.googleapis.com/auth/business.manage",
             "access_type": "offline",
             "prompt": "consent"
         }
@@ -59,7 +62,7 @@ class GoogleLoginCallbackView(APIView):
         }
         r = requests.post(token_url, data=data)
         token_info = r.json()
-        id_token = token_info.get("id_token")
+        
 
         # You can decode the id_token to get user info
         user_info = requests.get(
@@ -67,7 +70,7 @@ class GoogleLoginCallbackView(APIView):
             headers={"Authorization": f"Bearer {token_info['access_token']}"}
         ).json()
 
-        # Now you can create or log in the user
+        # Now create or log in the user
         try:
             user = CustomUser.objects.get(email=user_info['email'])
         except CustomUser.DoesNotExist:
@@ -81,12 +84,63 @@ class GoogleLoginCallbackView(APIView):
             return Response(user_info)   
         
         refresh = RefreshToken.for_user(user)
-       
+
+        # Store the token for future to access api
+        expires_in = token_info.get('expires_in')  # in seconds
+        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+
+        GoogleToken.objects.update_or_create(
+            user = user,
+            defaults=
+            {
+                "access_token": token_info["access_token"],
+                "refresh_token": token_info["refresh_token"],
+                "expires_at": expires_at
+            }
+        )
+
         return Response({
             "Access Token": str(refresh.access_token),
             "Refresh Token": str(refresh),
         })
 
 
+class GoogleReviewsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request):
+        user = request.user
+        try:
+            token = GoogleToken.objects.get(user=user)
+        except GoogleToken.DoesNotExist:
+            return Response({"error": "Google access token not found. Please connect your google account."},status=400)
+        
+        headers = {
+            "Authorization": f"Bearer {token.access_token}"
+            # "Authorization": f"Bearer "
+        }
+        # Get Google business account
+        account_resp = requests.get("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", headers=headers)
+        print(account_resp)
+        if account_resp.status_code != 200:
+            return Response({"error": "Failed to fetch account info", "detail": account_resp.json()}, status=account_resp.status_code)
+        
+        # Step 1: Get Google business account
+        account_data = account_resp.json()
+        account_id = account_data.get("accounts", [])[0]["name"]  # e.g., accounts/12345
+        print(account_id)
+        
+        # Step 2: Get locations
+        location_resp = requests.get(f"https://mybusinessaccountmanagement.googleapis.com/v1/{account_id}/locations/?readMask=name", headers=headers)
+        location_data = location_resp.json()
+        location_id = location_data.get("locations", [])[0]["name"]  # e.g., accounts/123/locations/456
+        print(location_id)
+       
+        # Step 3: Fetch reviews
+        reviews_resp = requests.get(f"https://mybusinessaccountmanagement.googleapis.com/v1/{account_id}/{location_id}/reviews", headers=headers)
+
+        return Response(reviews_resp.json())
+        
 
 
