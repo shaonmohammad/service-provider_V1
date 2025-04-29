@@ -139,27 +139,6 @@ class CampaignSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Customer Data processing error: {str(e)}")
         else:
             raise serializers.ValidationError("No customer data provided.")
-
-
-        # for customer_data in customers_data:
-        #     try:
-        #         customer =  Customer.objects.create(**customer_data)
-        #         customer.campaign.set([campaign])
-
-        #          # Extract phone number & email
-        #         phone_number = customer.phone_number
-        #         email = customer.email
-
-        #         # Categorize recipients based on communication method
-        #         if validated_data.get("communication_method") == "SMS" and phone_number:
-        #             recipient_list_sms.append(phone_number)
-        #         elif validated_data.get("communication_method") == "WhatsApp" and phone_number:
-        #             recipient_list_whatsapp.append(phone_number)
-        #         elif validated_data.get("communication_method") == "Email" and email:
-        #             recipient_list_email.append(email)
-
-        #     except Exception as e:
-        #         print(f"Error creating customer: {e}")
         
         
         # Fetch messages based on communication type
@@ -187,7 +166,7 @@ class CampaignSerializer(serializers.ModelSerializer):
 
         # Send Emails
         if recipient_list_email and email_message_obj:
-            send_bulk_email.delay(recipient_list_email, email_message_obj.subject, email_message_obj.message)
+            send_bulk_email.delay(recipient_list_email, email_message_obj.subject, email_message_obj.message,campaign.id)
 
         return campaign
     

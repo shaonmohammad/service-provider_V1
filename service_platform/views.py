@@ -108,3 +108,5 @@ class CreateCustomerReview(CreateAPIView):
     queryset = CustomerReview.objects.all()
     serializer_class = CustomerReviewCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+

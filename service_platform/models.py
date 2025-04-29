@@ -118,3 +118,8 @@ class CustomerReview(models.Model):
         verbose_name = "Customer Review"
         verbose_name_plural = "Customer Reviews"
     
+
+class EmailLog(models.Model):
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    recipient_email = models.EmailField()
+    event_type = models.CharField(max_length=50)  # 'delivered', 'open', 'bounce', etc.

@@ -1,4 +1,5 @@
 from django.urls import path
+from .webhook import email_event_webhook
 from .views import (
     PlatformListCreateView,
     ServicePlatformCreateView,
@@ -41,6 +42,9 @@ urlpatterns = [
 
     path('service_platforms/campaigns/<int:campaign_id>/customers_review/',
          CreateCustomerReview.as_view(),
-         name='create-customer-review')
+         name='create-customer-review'),
 
+     path('email-events/',
+          email_event_webhook,
+          name='email_event_webhook'),
 ]

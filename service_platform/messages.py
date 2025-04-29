@@ -4,6 +4,9 @@ from django.conf import settings
 from celery import shared_task
 from django.core.mail import send_mail
 from .models import Customer    
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Personalization, Email, To, Content, CustomArg
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +37,24 @@ def send_twilio_message(self, recipient, message, method):
 
 
 @shared_task(bind=True, max_retries=3)
-def send_bulk_email(self,recipients, subject, message):
-    """Send bulk emails using Django's SMTP"""
-    print("Message of Email: " + message)
+def send_bulk_email(self,recipients, subject, message,campaign_id):
+    
     try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=recipients,
-            fail_silently=False,
-        )
+        sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+        from_email = Email(settings.EMAIL_HOST_USER)
+        content = Content("text/plain", message)
+        mail = Mail(from_email=from_email, subject=subject, plain_text_content=content)
+
+        # Add each recipient with campaign_id as metadata
+        for email in recipients:
+                personalization = Personalization()
+                personalization.add_to(To(email))
+                personalization.subject = subject
+                personalization.add_custom_arg(CustomArg("campaign_id", str(campaign_id)))
+                mail.add_personalization(personalization)
+
+        response = sg.send(mail)
+
         Customer.objects.filter(email__in=recipients).update(is_sent_email=True)
         print("Emails sent successfully!")
         return "Emails sent successfully!"
