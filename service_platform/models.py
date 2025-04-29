@@ -1,23 +1,31 @@
 from django.db import models
 from accounts.models import TimestampMixin,CustomUser
-
+from django.utils.text import slugify
 
 class Platform(TimestampMixin):
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     logo = models.ImageField(upload_to='platforms/', null=True, blank=True)
     platform_link = models.URLField(null=True, blank=True)
+    slug = models.SlugField(unique=True,null=True,blank=True)
     class Meta:
         verbose_name = "Platform"
         verbose_name_plural = "Platforms"
         ordering = ['-created_at']
+
     def __str__(self):
         return self.name
+    
+    def save(self,*args,**kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args,**kwargs)
 
 class ServicePlatforms(TimestampMixin):
     service_provider = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     credentials = models.JSONField(default=dict,null=True, blank=True)
+    slug = models.SlugField(unique=True,null=True,blank=True)
 
     class Meta:
         unique_together = (('service_provider', 'platform'),)
@@ -27,6 +35,10 @@ class ServicePlatforms(TimestampMixin):
     def __str__(self):
         return f"{self.service_provider} - {self.platform}"
 
+    def save(self,*args,**kwargs):
+        if not self.slug:
+            self.slug = slugify(self.platform.name)
+        super().save(*args,**kwargs)
 
 class Campaign(TimestampMixin):
     SMS = 'SMS'
@@ -44,12 +56,18 @@ class Campaign(TimestampMixin):
     service_platforms = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
     service_provider =  models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     communication_method = models.CharField(max_length=10, choices=COMMUNICATION_CHOICES, default=SMS)
+    slug = models.SlugField(unique=True,null=True,blank=True)
     class Meta:
         verbose_name = "Campaign"
         verbose_name_plural = "Campaigns"
         ordering = ['-created_at']  
     def __str__(self):
         return self.name
+    
+    def save(self,*args,**kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args,**kwargs)
 
 
 class Customer(TimestampMixin):
@@ -61,12 +79,18 @@ class Customer(TimestampMixin):
     is_sent_email = models.BooleanField(default=False) 
     is_sent_sms = models.BooleanField(default=False)
     is_given_review = models.BooleanField(default=False)
+    slug = models.SlugField(unique=True,null=True,blank=True)
     class Meta:
         verbose_name = "Customer"
         verbose_name_plural = "Customers"
     
     def __str__(self):
         return self.name
+    
+    def save(self,*args,**kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args,**kwargs)
     
 class CampaignMessage(models.Model):
     COMMUNICATION_CHOICES = [
