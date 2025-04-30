@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import TimestampMixin,CustomUser
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Platform(TimestampMixin):
     name = models.CharField(max_length=200)
@@ -28,7 +29,9 @@ class ServicePlatforms(TimestampMixin):
     slug = models.SlugField(unique=True,null=True,blank=True)
 
     class Meta:
-        unique_together = (('service_provider', 'platform'),)
+        constraints = [
+            models.UniqueConstraint(fields=['service_provider', 'platform'], name='unique_service_platform')
+        ]
         verbose_name = "Service Platform"
         verbose_name_plural = "Service Platforms"
         ordering = ['-created_at']
@@ -109,7 +112,7 @@ class CampaignMessage(models.Model):
 class CustomerReview(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='review_of_campaign')
-    rating = models.IntegerField()
+    rating = models.IntegerField(validators=[MinValueValidator(1),MaxValueValidator(5)])
     review_text = models.TextField(null=True, blank=True)
 
     def __str__(self):
