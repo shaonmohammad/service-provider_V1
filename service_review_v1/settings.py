@@ -37,6 +37,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 # Application definition
 
 INSTALLED_APPS = [
+    # "unfold",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -164,6 +165,64 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
+# Log Message Config
+import os
+
+LOG_DIR = os.path.join(BASE_DIR, 'log_file')
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'django_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'django.log'),
+            'formatter': 'verbose',
+        },
+        'celery_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'celery.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'django_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console', 'celery_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    }
+}
+
+
+
 
 # Twilio Config
 TWILIO_ACCOUNT_SID = "your_account_sid"
@@ -175,12 +234,12 @@ TWILIO_WHATSAPP_NUMBER = ""
 # Email SMTP Config
 # AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
 # AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-# EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 # EMAIL_BACKEND = "django_ses.SESBackend"
-# AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME')
 # EMAIL_HOST = env('EMAIL_HOST')
 # EMAIL_PORT = env('EMAIL_PORT', cast=int)
 # EMAIL_USE_TLS = env('EMAIL_USE_TLS', cast=bool, default=True)
+SENDGRID_API_KEY = env('SENDGRID_API_KEY')
 
 # JWT Configuration
 SIMPLE_JWT = {
@@ -199,6 +258,7 @@ CELERY_TASK_SERIALIZER = 'json'
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
 
 
 # import os

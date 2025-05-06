@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 from rest_framework import serializers
 from service_review_v1 import settings
@@ -10,6 +11,9 @@ from .models import (
     CampaignMessage,
     CustomerReview
     )
+
+
+logger = logging.getLogger('django')
 
 class PlatformSerializer(serializers.ModelSerializer):
     class Meta:
@@ -115,14 +119,13 @@ class CampaignSerializer(serializers.ModelSerializer):
                 
                 for _, row in df.iterrows():
                     customer = Customer.objects.create(
+                        campaign = campaign,
                         name=row['name'],
                         email=row['email'],
-                        phone_number=row['phone_number']
+                        phone_number=row['phone_number'] 
                         # Add other fields as needed
                     )
-                    print(f"Created customer: {customer}")
-                    customer.campaign.set([campaign])
-
+                    
                     # Extract phone number & email
                     phone_number = customer.phone_number
                     email = customer.email
@@ -139,27 +142,6 @@ class CampaignSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Customer Data processing error: {str(e)}")
         else:
             raise serializers.ValidationError("No customer data provided.")
-
-
-        # for customer_data in customers_data:
-        #     try:
-        #         customer =  Customer.objects.create(**customer_data)
-        #         customer.campaign.set([campaign])
-
-        #          # Extract phone number & email
-        #         phone_number = customer.phone_number
-        #         email = customer.email
-
-        #         # Categorize recipients based on communication method
-        #         if validated_data.get("communication_method") == "SMS" and phone_number:
-        #             recipient_list_sms.append(phone_number)
-        #         elif validated_data.get("communication_method") == "WhatsApp" and phone_number:
-        #             recipient_list_whatsapp.append(phone_number)
-        #         elif validated_data.get("communication_method") == "Email" and email:
-        #             recipient_list_email.append(email)
-
-        #     except Exception as e:
-        #         print(f"Error creating customer: {e}")
         
         
         # Fetch messages based on communication type
@@ -167,13 +149,16 @@ class CampaignSerializer(serializers.ModelSerializer):
         sms_message_obj = CampaignMessage.objects.filter(communication_type='SMS').first()
         whatsapp_message_obj = CampaignMessage.objects.filter(communication_type='WhatsApp').first()
 
+        
         # Create URL for Campaign Review 
+    
         print("Trying to create url")
         request = self.context.get("request")
         base_url = request.build_absolute_uri('/') 
        
         campaign_review_url = f"{base_url}/service-review/campaigns/{campaign.id}/customers_review/"
         print(campaign_review_url)
+        logger.info("This is logger message")
 
         # Send SMS messages
         if recipient_list_sms and sms_message_obj:
@@ -187,7 +172,7 @@ class CampaignSerializer(serializers.ModelSerializer):
 
         # Send Emails
         if recipient_list_email and email_message_obj:
-            send_bulk_email.delay(recipient_list_email, email_message_obj.subject, email_message_obj.message)
+            send_bulk_email.delay(recipient_list_email, email_message_obj.subject, email_message_obj.message,campaign.id,base_url)
 
         return campaign
     
@@ -256,35 +241,8 @@ class CampaignDetailsSerializer(serializers.ModelSerializer):
 
 
 class CustomerReviewCreateSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True,write_only=True)
     class Meta:
         model = CustomerReview
-        fields = ('email','rating', 'review_text')
+        fields = ['rating', 'review_text']
 
-        def validate_email(self, value):
-            if not value:
-                raise serializers.ValidationError("Email is required.")
-            
-            if not CustomUser.objects.filter(email=value).exists():
-                raise serializers.ValidationError("Email not found.")
-            return value
-
-    def create(self, validated_data):
-        email = validated_data.pop('email', None)
-        customer = Customer.objects.filter(email=email).last()
-
-        request = self.context.get("request")
-        campaign_id = request.parser_context['kwargs'].get('campaign_id')
-        campaign = Campaign.objects.get(id=campaign_id)
-        print(campaign_id)
-
-        customer_review = CustomerReview.objects.create(
-            customer=customer,
-            campaign = campaign,
-            rating=validated_data['rating'],
-            review_text=validated_data['review_text']
-        )
-        if customer_review:
-            customer.is_given_review = True
-            customer.save()
-        return customer_review
+    

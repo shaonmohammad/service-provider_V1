@@ -81,7 +81,7 @@ class GoogleLoginCallbackView(APIView):
                 email = user_info['email'],
                 profile_picture = user_info['picture']
             )
-            return Response(user_info)   
+            
         
         refresh = RefreshToken.for_user(user)
 

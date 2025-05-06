@@ -1,6 +1,8 @@
 from rest_framework.generics import ListCreateAPIView,CreateAPIView,ListAPIView,RetrieveAPIView
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
+from rest_framework import permissions,serializers,status
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from .models import (
     Platform,
     ServicePlatforms,
@@ -55,32 +57,31 @@ class CampaignListAPIView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self): 
-        service_platform_id = self.kwargs.get("service_platform_id")
+        service_platform_slug = self.kwargs.get("slug")
+        service_platform = get_object_or_404(ServicePlatforms,slug=service_platform_slug)
 
-        try:
-            return Campaign.objects.filter(
-                service_provider=self.request.user,
-                service_platforms__id=service_platform_id
-            )
-        except Campaign.DoesNotExist:
-            return []
+        # Filter the Campaigns based on the service_platform and the current user
+        return Campaign.objects.filter(
+            service_provider=self.request.user,
+            service_platforms=service_platform
+        )
 class CampaignDetailsAPIView(ListAPIView):
     serializer_class = CampaignDetailsSerializer
     permission_classes = [permissions.IsAuthenticated]
     
 
     def get_queryset(self): 
-        campaign_id = self.kwargs.get("campaign_id")
-        service_platform_id = self.kwargs.get("service_platform_id")
+        service_platform_slug = self.kwargs.get('service_platform_slug')
+        service_platform  = get_object_or_404(ServicePlatforms,slug=service_platform_slug)
 
-        try:
-            return Campaign.objects.filter(
-                id=campaign_id,
-                service_provider=self.request.user,
-                service_platforms__id=service_platform_id
-            )
-        except Campaign.DoesNotExist:
-            return []
+        campaign_slug = self.kwargs.get('campaign_slug')
+        campaign = get_object_or_404(Campaign,slug=campaign_slug)
+
+        return Campaign.objects.filter(
+            id = campaign.id,
+            service_provider = self.request.user,
+            service_platforms=service_platform
+        )
 
 class CustomerListAPIView(ListAPIView):
     serializer_class = CustomerListSerializer
@@ -89,21 +90,49 @@ class CustomerListAPIView(ListAPIView):
     filterset_fields = ['is_given_review','is_sent_email']
 
     def get_queryset(self):
-        campaign_id = self.kwargs.get("campaign_id")
-        service_platform_id = self.kwargs.get("service_platform_id")
+        service_platform_slug = self.kwargs.get('service_platform_slug')
+        service_platform  = get_object_or_404(ServicePlatforms,slug=service_platform_slug)
+
+        campaign_slug = self.kwargs.get('campaign_slug')
+        campaign = get_object_or_404(Campaign,slug=campaign_slug)
+
 
         queryset = Customer.objects.filter(
             campaign__service_provider=self.request.user,
-            campaign__id=campaign_id,
-            campaign__service_platforms__id=service_platform_id
+            campaign=campaign,
+            campaign__service_platforms=service_platform
         )
-
-        if not queryset.exists():
-            return Customer.objects.none()
         
         return queryset
 
 class CreateCustomerReview(CreateAPIView):
-    queryset = CustomerReview.objects.all()
     serializer_class = CustomerReviewCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+
+    def get_customer(self):
+        uuid = self.kwargs.get('uuid')
+        try:
+            return Customer.objects.get(uuid=uuid)
+        except Customer.DoesNotExist:
+            return None
+        
+    def perform_create(self, serializer):
+        customer = self.get_customer()
+        if not customer:
+            raise serializers.ValidationError({'error': 'Invalid customer UUID.'})
+        serializer.save(
+            campaign = customer.campaign,
+            customer = customer
+        )
+        customer.is_given_review = True
+        customer.save()
+
+    
+    def create(self, request, *args, **kwargs):
+        customer = self.get_customer()
+        if not customer:
+            return Response({'error': 'Invalid customer UUID.'}, status=status.HTTP_404_NOT_FOUND)
+        return super().create(request, *args, **kwargs)
+
+
+
