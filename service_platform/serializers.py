@@ -172,7 +172,7 @@ class CampaignSerializer(serializers.ModelSerializer):
 
         # Send Emails
         if recipient_list_email and email_message_obj:
-            send_bulk_email(recipient_list_email, email_message_obj.subject, email_message_obj.message,campaign.id,base_url)
+            send_bulk_email.delay(recipient_list_email, email_message_obj.subject, email_message_obj.message,campaign.id,base_url)
 
         return campaign
     
