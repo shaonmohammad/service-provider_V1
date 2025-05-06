@@ -8,7 +8,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Personalization, Email, To, Content, CustomArg
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('celery')
 
 
 @shared_task(bind=True, max_retries=3)
@@ -36,28 +36,36 @@ def send_twilio_message(self, recipient, message, method):
         raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed
 
 
-@shared_task(bind=True, max_retries=3)
-def send_bulk_email(self,recipients, subject, message,campaign_id):
+# @shared_task(bind=True, max_retries=3)
+def send_bulk_email(recipients, subject, message,campaign_id,base_url):
+    sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+    from_email = Email(settings.EMAIL_HOST)
+    content = Content("text/plain", message)
+    mail = Mail(from_email=from_email, subject=subject, plain_text_content=content)
+
+    for email in recipients:
+        try:
+            customer = Customer.objects.filter(email=email).last()
+            customer_uuid = customer.uuid
+            campaign_review_url = f"{base_url}/api/reviews/submit/{customer_uuid}/"
+            
+            # You can include this URL in the message or as a custom arg if needed
+            full_message = f"{message}\n\nPlease leave a review here: {campaign_review_url}"
+
+            logger.info(f"Full Email Message: {full_message}")
+            personalization = Personalization()
+            personalization.add_to(To(email))
+            personalization.subject = subject
+            personalization.add_custom_arg(CustomArg("campaign_id", str(campaign_id)))
+            # personalization.add_dynamic_template_data({"review_link": campaign_review_url})
+            # personalization.add_dynamic_template_data({"message": full_message})
+            mail.add_personalization(personalization)
+        
+        except Customer.DoesNotExist:
+            continue  # skip if customer with that email doesn't exist
+
+    # response = sg.send(mail)
+
+    Customer.objects.filter(email__in=recipients).update(is_sent_email=True)
     
-    try:
-        sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
-        from_email = Email(settings.EMAIL_HOST_USER)
-        content = Content("text/plain", message)
-        mail = Mail(from_email=from_email, subject=subject, plain_text_content=content)
-
-        # Add each recipient with campaign_id as metadata
-        for email in recipients:
-                personalization = Personalization()
-                personalization.add_to(To(email))
-                personalization.subject = subject
-                personalization.add_custom_arg(CustomArg("campaign_id", str(campaign_id)))
-                mail.add_personalization(personalization)
-
-        response = sg.send(mail)
-
-        Customer.objects.filter(email__in=recipients).update(is_sent_email=True)
-        print("Emails sent successfully!")
-        return "Emails sent successfully!"
-    except Exception as e:
-        print(f"Error sending emails: {e}")
-        raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed
+    return "Emails sent successfully!"

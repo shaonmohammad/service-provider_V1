@@ -1,6 +1,7 @@
 from rest_framework.generics import ListCreateAPIView,CreateAPIView,ListAPIView,RetrieveAPIView
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
+from rest_framework import permissions,serializers,status
+from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import (
     Platform,
@@ -105,8 +106,33 @@ class CustomerListAPIView(ListAPIView):
         return queryset
 
 class CreateCustomerReview(CreateAPIView):
-    queryset = CustomerReview.objects.all()
     serializer_class = CustomerReviewCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+
+    def get_customer(self):
+        uuid = self.kwargs.get('uuid')
+        try:
+            return Customer.objects.get(uuid=uuid)
+        except Customer.DoesNotExist:
+            return None
+        
+    def perform_create(self, serializer):
+        customer = self.get_customer()
+        if not customer:
+            raise serializers.ValidationError({'error': 'Invalid customer UUID.'})
+        serializer.save(
+            campaign = customer.campaign,
+            customer = customer
+        )
+        customer.is_given_review = True
+        customer.save()
+
+    
+    def create(self, request, *args, **kwargs):
+        customer = self.get_customer()
+        if not customer:
+            return Response({'error': 'Invalid customer UUID.'}, status=status.HTTP_404_NOT_FOUND)
+        return super().create(request, *args, **kwargs)
+
 
 

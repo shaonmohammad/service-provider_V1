@@ -40,11 +40,11 @@ urlpatterns = [
          CustomerListAPIView.as_view(),
          name='customer-list'),
 
-    path('service_platforms/campaigns/<int:campaign_id>/customers_review/',
+    path('api/reviews/submit/<uuid:uuid>/',
          CreateCustomerReview.as_view(),
-         name='create-customer-review'),
+          name='submit_customer_review'),
 
-     path('email-events/',
+    path('email-events/',
           email_event_webhook,
           name='email_event_webhook'),
 ]

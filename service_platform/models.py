@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from accounts.models import TimestampMixin,CustomUser
 from django.utils.text import slugify
@@ -74,7 +75,7 @@ class Campaign(TimestampMixin):
 
 
 class Customer(TimestampMixin):
-    campaign = models.ManyToManyField(Campaign,related_name='customers')
+    campaign = models.ForeignKey(Campaign,related_name='customers',on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     email = models.EmailField()
     phone_number = models.CharField(max_length=15,null=True,blank=True)
@@ -82,7 +83,7 @@ class Customer(TimestampMixin):
     is_sent_email = models.BooleanField(default=False) 
     is_sent_sms = models.BooleanField(default=False)
     is_given_review = models.BooleanField(default=False)
-    slug = models.SlugField(unique=True,null=True,blank=True)
+    uuid = models.UUIDField(default=uuid.uuid4,editable=False,null=True)
     class Meta:
         verbose_name = "Customer"
         verbose_name_plural = "Customers"
@@ -90,10 +91,7 @@ class Customer(TimestampMixin):
     def __str__(self):
         return self.name
     
-    def save(self,*args,**kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args,**kwargs)
+
     
 class CampaignMessage(models.Model):
     COMMUNICATION_CHOICES = [
@@ -110,13 +108,13 @@ class CampaignMessage(models.Model):
         return f"{self.communication_type} - {self.subject or 'No Subject'}"
     
 class CustomerReview(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='review_of_campaign')
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='reviews')
     rating = models.IntegerField(validators=[MinValueValidator(1),MaxValueValidator(5)])
     review_text = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"Review by {self.customer} on {self.campaign}"
+        return f"Review by {self.campaign}"
     class Meta:
         verbose_name = "Customer Review"
         verbose_name_plural = "Customer Reviews"
