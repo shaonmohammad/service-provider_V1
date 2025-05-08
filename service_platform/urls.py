@@ -8,7 +8,8 @@ from .views import (
     CampaignListAPIView,
     CustomerListAPIView,
     CampaignDetailsAPIView,
-    CreateCustomerReview
+    CreateCustomerReview,
+    FacebookPageReivewView
     )
 
 urlpatterns = [
@@ -47,4 +48,9 @@ urlpatterns = [
     path('email-events/',
           email_event_webhook,
           name='email_event_webhook'),
+
+     # Facebook Page Review
+     path('service_platform/facebook/reviews/',
+          FacebookPageReivewView.as_view(),
+          name='facebook-page-review')
 ]

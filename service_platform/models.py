@@ -26,7 +26,7 @@ class Platform(TimestampMixin):
 class ServicePlatforms(TimestampMixin):
     service_provider = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
-    credentials = models.JSONField(default=dict,null=True, blank=True)
+    platform_link = models.URLField(null=True,blank=True)
     slug = models.SlugField(unique=True,null=True,blank=True)
 
     class Meta:

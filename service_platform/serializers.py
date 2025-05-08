@@ -185,7 +185,7 @@ class ServicePlatformsListSerializer(serializers.ModelSerializer):
             'id',
             'created_at',
             'platform',
-            'credentials'
+            
             ) 
 
 class CampaignListSerializer(serializers.ModelSerializer):
