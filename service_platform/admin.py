@@ -16,7 +16,7 @@ class PlatformAdmin(admin.ModelAdmin):
 
 @admin.register(ServicePlatforms)
 class ServicePlatformsAdmin(admin.ModelAdmin):
-    list_display = ('created_at','service_provider','platform','credentials')
+    list_display = ('created_at','service_provider','platform')
     list_filter = ('platform','service_provider')
 
 @admin.register(Customer)
