@@ -1,4 +1,5 @@
 import requests
+import logging
 from rest_framework.generics import ListCreateAPIView,CreateAPIView,ListAPIView,RetrieveAPIView
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -7,6 +8,9 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseForbidden
 from django.conf import settings
+from django.db.models import Prefetch
+
+
 from .models import (
     Platform,
     ServicePlatforms,
@@ -14,6 +18,7 @@ from .models import (
     Customer,
     CustomerReview
     )
+from accounts.models import CustomUser
 from .serializers import (
     PlatformSerializer,
     ServicePlatformsCreateSerializer,
@@ -24,6 +29,9 @@ from .serializers import (
     CampaignDetailsSerializer,
     CustomerReviewCreateSerializer
     )
+
+from .utils.wextractor_service import save_data_to_model
+logger = logging.getLogger('celery')
 
 # Handles both GET (list) and POST (create)
 class PlatformListCreateView(ListCreateAPIView):
@@ -140,41 +148,62 @@ class CreateCustomerReview(CreateAPIView):
 
 
 
-class FacebookPageReivewView(APIView):
+class FacebookPageReviewView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self,request,*args,**kwargs):
-        user =  self.request.user
         next_page_cursor = request.query_params.get("next_page_cursor") 
 
-        # Get the latest service platform for the user and specific platform
-        service_platform = ServicePlatforms.objects.filter(
-            service_provider = user,
-            platform__name = "Facebook Page Review"
-        ).last()
-
-        if not service_platform:
-            return Response({"error":"Service Platform not found"},status=404)
-
-        # Extract page_id from URL
-        try:
-            page_id = service_platform.platform_link.rstrip('/').split('/')[-1]
-        except Exception:
-            return Response({"error":"Invalid Platform Link"},status=400)
-
-        # Prepare API call
-        review_url = "https://wextractor.com/api/v1/reviews/facebook"
-        params = {
-            "id":page_id,
-            "auth_token":settings.WEXTRACTOR_API_KEY,
-        }
-        if next_page_cursor:
-            params['cursor'] = next_page_cursor
+        users = CustomUser.objects.filter(
+            is_active=True,
+            # is_staff = False,
+            serviceplatforms__platform__name__iexact = 'Facebook'
+            ).prefetch_related(
+                Prefetch(
+                    'serviceplatforms_set',
+                    queryset=ServicePlatforms.objects.select_related('platform')
+                )
+            ).distinct()
         
-        try:
-            review_response = requests.get(review_url,params)
-            review_response.raise_for_status()
-        except requests.RequestException as e:
-            return Response({"error":"Failed to fetch data from wextractor","details":str(e)},status=502)
-        
-        return Response(review_response.json())
+        for user in users:
+            # Get the latest service platform for the user and specific platform
+            facebook_platform = [
+                fp for fp in user.serviceplatforms_set.all()
+                if fp.platform.name.lower() == 'facebook'
+            ]
+            service_platform = facebook_platform[-1] if facebook_platform else None
+
+            if not service_platform:
+                logger.warning(f"{user.email} does not have a Facebook platform.")
+                continue
+
+            # Extract page_id from URL
+            try:
+                page_id = service_platform.platform_link.rstrip('/').split('/')[-1]
+            except Exception:
+                logger.exception("Invalid Platform Link", exc_info=True)
+                continue
+
+            # Prepare API call
+            WEXTRACTOR_FACEBOOK_REVIEW_URL = "https://wextractor.com/api/v1/reviews/facebook"
+            params = {
+                "id":page_id,
+                "auth_token":settings.WEXTRACTOR_API_KEY,
+            }
+            if next_page_cursor:
+                params['cursor'] = next_page_cursor
+            
+            try:
+                review_response = requests.get(WEXTRACTOR_FACEBOOK_REVIEW_URL,params)
+                review_response.raise_for_status()
+            except requests.RequestException as e:
+                logger.error("Failed to fetch data from wextractor")
+                continue
+                
+            # Save data to model
+            platform = service_platform.platform
+            save_data_to_model(user,platform,review_response.json())
+
+        return Response({
+            "message": "Facebook reviews fetched successfully",
+        })
 
