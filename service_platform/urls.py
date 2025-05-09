@@ -9,7 +9,7 @@ from .views import (
     CustomerListAPIView,
     CampaignDetailsAPIView,
     CreateCustomerReview,
-    FacebookPageReivewView
+    FacebookPageReviewView
     )
 
 urlpatterns = [
@@ -51,6 +51,6 @@ urlpatterns = [
 
      # Facebook Page Review
      path('service_platform/facebook/reviews/',
-          FacebookPageReivewView.as_view(),
+          FacebookPageReviewView.as_view(),
           name='facebook-page-review')
 ]

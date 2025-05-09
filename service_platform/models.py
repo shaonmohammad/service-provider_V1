@@ -124,3 +124,20 @@ class EmailLog(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     recipient_email = models.EmailField()
     event_type = models.CharField(max_length=50)  # 'delivered', 'open', 'bounce', etc.
+
+class OnlineReview(models.Model):
+    reviewer = models.CharField(max_length=200,null=True,blank=True)
+    review = models.TextField(null=True,blank=True)
+    review_date = models.DateField()
+    reviewer_image = models.URLField(null=True,blank=True)
+    rating = models.IntegerField(null=True,blank=True)
+    service_provider = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.reviewer
+    
+    def delete_previous_data(self,user,platform):
+        pass
+
+
+
