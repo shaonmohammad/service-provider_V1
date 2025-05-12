@@ -50,7 +50,7 @@ urlpatterns = [
           name='email_event_webhook'),
 
      # Facebook Page Review
-     path('service_platform/facebook/reviews/',
+     path('service_platform/facebook/reviews/fetch/ ',
           FacebookPageReviewView.as_view(),
           name='facebook-page-review')
 ]

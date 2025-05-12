@@ -131,7 +131,7 @@ class OnlineReview(models.Model):
     review_date = models.DateField()
     reviewer_image = models.URLField(null=True,blank=True)
     rating = models.IntegerField(null=True,blank=True)
-    service_provider = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
+    service_platform = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
 
     def __str__(self):
         return self.reviewer

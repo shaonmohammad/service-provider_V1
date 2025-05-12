@@ -11,7 +11,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import CustomUser,GoogleToken
 from .serializers import UserRegistrationSerializer
 
@@ -34,6 +35,42 @@ def RegistrationView(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class CookieTokenObtainPairView(TokenObtainPairView):
+    serializer_class = TokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+        tokens = serializer.validated_data
+        response = Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
+
+        # Set access and refresh tokens as HttpOnly cookies
+        response.set_cookie(
+            key='access_token',
+            value=tokens['access'],
+            httponly=True,
+            secure=True,      
+            samesite='None'   
+        )
+        response.set_cookie(
+            key='refresh_token',
+            value=tokens['refresh'],
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
+        return response
+
+class LogoutView(APIView):
+    def post(self, request):
+        response = Response({'message': 'Logged out'}, status=200)
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
 
 class GoogleLoginInitView(APIView):
     def get(self,request):
