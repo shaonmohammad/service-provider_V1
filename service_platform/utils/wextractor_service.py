@@ -15,14 +15,14 @@ def save_data_to_model(service_platform,data):
         date = datetime_obj.date()
 
         review_obj,created = OnlineReview.objects.get_or_create(
-            service_platform = service_platform,
-            reviewer  = review['reviewer'],
+            review_id = review['id'],
             defaults = {
                 'reviewer' : review['reviewer'],
                 'review'  : review['text'],
                 'review_date' : date,
                 'rating' : review['rating'] or 0,
                 # 'reviewer_image' : "review['avatar']",
+                'service_platform' : service_platform,
 
             }
         )

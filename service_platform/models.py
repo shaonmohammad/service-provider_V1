@@ -126,6 +126,7 @@ class EmailLog(models.Model):
     event_type = models.CharField(max_length=50)  # 'delivered', 'open', 'bounce', etc.
 
 class OnlineReview(models.Model):
+    review_id = models.CharField(max_length=255,unique=True,null=True)
     reviewer = models.CharField(max_length=200,null=True,blank=True)
     review = models.TextField(null=True,blank=True)
     review_date = models.DateField()
