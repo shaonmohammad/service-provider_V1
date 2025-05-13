@@ -1,5 +1,7 @@
 from django.urls import path
 from .webhook import email_event_webhook
+from .tasks import facebook_page_review,booking_dot_com_review
+
 from .views import (
     PlatformListCreateView,
     ServicePlatformCreateView,
@@ -9,7 +11,7 @@ from .views import (
     CustomerListAPIView,
     CampaignDetailsAPIView,
     CreateCustomerReview,
-    FacebookPageReviewView
+#     FacebookPageReviewView
     )
 
 urlpatterns = [
@@ -51,6 +53,6 @@ urlpatterns = [
 
      # Facebook Page Review
      path('service_platform/facebook/reviews/fetch/',
-          FacebookPageReviewView.as_view(),
+          booking_dot_com_review,
           name='facebook-page-review')
 ]
