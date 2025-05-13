@@ -110,7 +110,7 @@ class CampaignMessage(models.Model):
 class CustomerReview(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='review_of_campaign')
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='reviews')
-    rating = models.IntegerField(validators=[MinValueValidator(1),MaxValueValidator(5)])
+    rating = models.FloatField(null=True,blank=True)
     review_text = models.TextField(null=True, blank=True)
 
     def __str__(self):

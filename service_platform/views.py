@@ -30,7 +30,6 @@ from .serializers import (
     CustomerReviewCreateSerializer
     )
 
-from .utils.wextractor_service import save_data_to_model,fetch_and_save_reviews
 logger = logging.getLogger('celery')
 
 # Handles both GET (list) and POST (create)
@@ -148,51 +147,51 @@ class CreateCustomerReview(CreateAPIView):
 
 
 
-class FacebookPageReviewView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    def get(self,request,*args,**kwargs):
+# class FacebookPageReviewView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+#     def get(self,request,*args,**kwargs):
 
-        users = CustomUser.objects.filter(
-            is_active=True,
-            # is_staff = False,
-            serviceplatforms__platform__name__iexact = 'Facebook'
-            ).prefetch_related(
-                Prefetch(
-                    'serviceplatforms_set',
-                    queryset=ServicePlatforms.objects.select_related('platform')
-                )
-            ).distinct()
+#         users = CustomUser.objects.filter(
+#             is_active=True,
+#             # is_staff = False,
+#             serviceplatforms__platform__name__iexact = 'Facebook'
+#             ).prefetch_related(
+#                 Prefetch(
+#                     'serviceplatforms_set',
+#                     queryset=ServicePlatforms.objects.select_related('platform')
+#                 )
+#             ).distinct()
         
-        for user in users:
-            # Get the latest service platform for the user and specific platform
-            facebook_platform = [
-                fp for fp in user.serviceplatforms_set.all()
-                if fp.platform.name.lower() == 'facebook'
-            ]
+#         for user in users:
+#             # Get the latest service platform for the user and specific platform
+#             facebook_platform = [
+#                 fp for fp in user.serviceplatforms_set.all()
+#                 if fp.platform.name.lower() == 'facebook'
+#             ]
 
-            service_platform = facebook_platform[-1] if facebook_platform else None
-            if not service_platform:
-                logger.warning(f"{user.email} does not have a Facebook platform.")
-                continue
+#             service_platform = facebook_platform[-1] if facebook_platform else None
+#             if not service_platform:
+#                 logger.warning(f"{user.email} does not have a Facebook platform.")
+#                 continue
 
-            # Extract page_id from URL
-            try:
-                page_id = service_platform.platform_link.rstrip('/').split('/')[-1]
-            except Exception:
-                logger.exception("Invalid Platform Link", exc_info=True)
-                continue
+#             # Extract page_id from URL
+#             try:
+#                 page_id = service_platform.platform_link.rstrip('/').split('/')[-1]
+#             except Exception:
+#                 logger.exception("Invalid Platform Link", exc_info=True)
+#                 continue
             
-            """
-                This method fetch data from API
-                and save the fetched data to databse
+#             """
+#                 This method fetch data from API
+#                 and save the fetched data to databse
                 
-                Perameter:
-                1.Service Platform
-                2.Page ID (Facebook Page URL)
-            """
-            fetch_and_save_reviews(service_platform,page_id)
+#                 Perameter:
+#                 1.Service Platform
+#                 2.Page ID (Facebook Page URL)
+#             """
+#             fetch_and_save_reviews(service_platform,page_id)
              
-        return Response({
-            "message": "Facebook reviews fetched successfully",
-        })
+#         return Response({
+#             "message": "Facebook reviews fetched successfully",
+#         })
 
