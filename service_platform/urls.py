@@ -1,6 +1,6 @@
 from django.urls import path
 from .webhook import email_event_webhook
-from .tasks import facebook_page_review,booking_dot_com_review
+from .tasks import facebook_page_review,booking_dot_com_review,tripadvisor_review
 
 from .views import (
     PlatformListCreateView,
@@ -56,3 +56,5 @@ urlpatterns = [
           booking_dot_com_review,
           name='facebook-page-review')
 ]
+
+
