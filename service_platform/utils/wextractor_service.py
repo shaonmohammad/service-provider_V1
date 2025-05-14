@@ -1,6 +1,8 @@
-import requests
-import logging
+import re
 import math
+import logging
+import requests
+
 from datetime import datetime
 from ..models import OnlineReview
 from django.db.models import Prefetch
@@ -11,11 +13,10 @@ from django.conf import settings
 logger = logging.getLogger('celery')
 
 def save_data_to_model(service_platform,data):
-    for review in data['reviews']:
+    for review in data.get('reviews'):
         # Convert datetime to date
-        datetime_str = review['datetime']
-        datetime_obj = datetime.fromisoformat(datetime_str)
-        date = datetime_obj.date()
+        datetime_str = review['datetime'][:10]
+        date =  datetime.strptime(datetime_str, '%Y-%m-%d').date()
 
         review_obj,created = OnlineReview.objects.get_or_create(
             review_id = review['id'],
@@ -57,13 +58,11 @@ def fetch_and_save_reviews_facebook(facebook_platform,page_id):
         if not next_page_cursor:
             break
 
-def fetch_and_save_reviews_booking(booking_platform,page_id):
+def fetch_and_save_reviews(WEXTRACTOR_API,PLATFORM_URL,service_platform,page_id):
     auth_token = settings.WEXTRACTOR_API_KEY
-    BOOKING_URL = f"https://wextractor.com/api/v1/reviews/booking?id={page_id}&auth_token={auth_token}"
     try:
-        response = requests.get(BOOKING_URL).json() 
+        response = requests.get(PLATFORM_URL).json() 
         page_amount = math.ceil(response['totals']['review_count']) / 10
-        WEXTRACTOR_BOOKING_URL = f"https://wextractor.com/api/v1/reviews/booking"
         
         params = {
             "id": page_id,
@@ -72,13 +71,15 @@ def fetch_and_save_reviews_booking(booking_platform,page_id):
         }
         
         for _ in range(int(page_amount)+1):
-            review_reqeust = requests.get(WEXTRACTOR_BOOKING_URL,params=params)
+            review_reqeust = requests.get(WEXTRACTOR_API,params=params)
             review_response = review_reqeust.json()
-            save_data_to_model(booking_platform,review_response)
+            
+            save_data_to_model(service_platform,review_response)
             params['offset'] += 10
 
     except requests.RequestException as e:
         logger.exception(f"API Request Failed For {page_id}")
+
 
 def get_platform_users(platform_name):
     users = CustomUser.objects.filter(
@@ -93,3 +94,19 @@ def get_platform_users(platform_name):
             ).distinct()
 
     return users
+
+def get_platform(user):
+    service_platform = [
+        sp for sp in user.serviceplatforms_set.all()
+    ]
+    platform = service_platform[-1] if service_platform else None 
+    return platform
+
+def extract_page_id(platform_name,platform_link):
+    if platform_name.lower() == 'tripadvisor':
+        match = re.search(r'-d(\d+)-', platform_link)
+        return match.group(1) if match else None
+    
+    elif(platform_name.lower() == 'booking'):
+        match = re.search(r"/hotel/([^/]+/[^/.]+)\.html", platform_link)
+        return match.group(1) if match else None
