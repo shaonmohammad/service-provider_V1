@@ -53,7 +53,7 @@ urlpatterns = [
 
      # Facebook Page Review
      path('service_platform/facebook/reviews/fetch/',
-          booking_dot_com_review,
+          tripadvisor_review,
           name='facebook-page-review')
 ]
 
