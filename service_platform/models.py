@@ -133,7 +133,7 @@ class OnlineReview(models.Model):
     reviewer = models.CharField(max_length=200,null=True,blank=True)
     review = models.TextField(null=True,blank=True)
     review_date = models.DateField()
-    reviewer_image = models.URLField(null=True,blank=True)
+    reviewer_image = models.URLField(max_length=500,null=True,blank=True)
     rating = models.IntegerField(null=True,blank=True)
     service_platform = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
 
