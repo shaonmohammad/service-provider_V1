@@ -17,39 +17,24 @@ from .utils.wextractor_service  import (
 logger = logging.getLogger('django')
 
 def facebook_page_review(request):
-    users = get_platform_users('Facebook')    
+    PLATFORM_NAME = 'facebook'
+    users = get_platform_users(PLATFORM_NAME)    
     for user in users:
-
         try:
             # Get the latest service platform for the user and specific platform
-            service_platform = [
-                fp for fp in user.serviceplatforms_set.all()
-                if fp.platform.name.lower() == 'facebook'
-            ]
-
-            facebook_platform = service_platform[-1] if service_platform else None
-            if not facebook_platform:
-                logger.warning(f"{user.email} does not have a Facebook platform.")
-                continue
-
-            # Extract page_id from URL
-            try:
-                page_id = facebook_platform.platform_link.rstrip('/').split('/')[-1]
-            except Exception:
-                logger.exception("Invalid Platform Link", exc_info=True)
+            service_platform = get_platform(user,PLATFORM_NAME)
+            page_link = service_platform.platform_link
+            print(page_link,"PAGE LINK")
+            page_id = extract_page_id('facebook',page_link)
+            
+            if not page_id:
+                logger.exception("Failed to fetch page id",user,service_platform)
                 continue
             
-            """
-                This method fetch data from API
-                and save the fetched data to databse
-                
-                Perameter:
-                1.Service Platform
-                2.Page ID (Facebook Page URL)
-            """
-            fetch_and_save_reviews_facebook(facebook_platform,page_id)
+            fetch_and_save_reviews_facebook(service_platform,page_id)
         except Exception as e:
-            logger.info(f"Faild to Fetch Review from Facebook for User {user}")
+            logger.info(f"Faild to Fetch Review from Facebook for User {user}",e)
+            continue
 
             
     return JsonResponse({"message": "Facebook page reviews fetched and saved successfully."})
@@ -61,7 +46,7 @@ def booking_dot_com_review(request):
 
     users = get_platform_users(PLATFORM_NAME)
     for user in users:
-        service_platform = get_platform(user)
+        service_platform = get_platform(user,PLATFORM_NAME)
         page_link = service_platform.platform_link
         
         page_id = extract_page_id(PLATFORM_NAME,page_link)
@@ -83,7 +68,7 @@ def tripadvisor_review(request):
 
     users = get_platform_users(PLATFORM_NAME)
     for user in users:
-        service_platform = get_platform(user)
+        service_platform = get_platform(user,PLATFORM_NAME)
         page_link = service_platform.platform_link
         
         page_id = extract_page_id(PLATFORM_NAME,page_link)

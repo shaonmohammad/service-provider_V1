@@ -11,6 +11,7 @@ from .views import (
     CustomerListAPIView,
     CampaignDetailsAPIView,
     CreateCustomerReview,
+    CampaignOnlineReview
 #     FacebookPageReviewView
     )
 
@@ -39,6 +40,11 @@ urlpatterns = [
          CampaignDetailsAPIView.as_view(),
          name='campaign-details'),
 
+    path('service_platforms/<slug:service_platform_slug>/campaigns/<slug:campaign_slug>/online_reviews/',
+         CampaignOnlineReview.as_view(),
+         name='online-review'
+         ),
+
     path('service_platforms/<int:service_platform_slug>/campaigns/<int:campaign_slug>/customers/',
          CustomerListAPIView.as_view(),
          name='customer-list'),
@@ -52,8 +58,8 @@ urlpatterns = [
           name='email_event_webhook'),
 
      # Facebook Page Review
-     path('service_platform/facebook/reviews/fetch/',
-          booking_dot_com_review,
+     path('service_platform/reviews/fetch/',
+          tripadvisor_review,
           name='facebook-page-review')
 ]
 

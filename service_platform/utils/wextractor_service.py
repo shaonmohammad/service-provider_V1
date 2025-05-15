@@ -13,8 +13,12 @@ from django.conf import settings
 logger = logging.getLogger('celery')
 
 def save_data_to_model(service_platform,data):
+    
+    """
+        This method save the collecetd from different Platform like:
+        (Facebook,Google,Booking.com etc.) to the OnlineReview model.
+    """
     for review in data.get('reviews'):
-        # Convert datetime to date
         datetime_str = review['datetime'][:10]
         date =  datetime.strptime(datetime_str, '%Y-%m-%d').date()
 
@@ -24,10 +28,9 @@ def save_data_to_model(service_platform,data):
                 'reviewer' : review['reviewer'],
                 'review'  : review.get('text') or review.get('title'),
                 'review_date' : date,
-                'rating' : float(review.get('rating')) or 0,
-                # 'reviewer_image' : "review['avatar']",
+                'rating' : float(review.get('rating')) if review.get('rating') else 0,
+                'reviewer_image' : review.get('review_avatar') or review.get('avatar'),
                 'service_platform' : service_platform,
-
             }
         )
 
@@ -82,6 +85,10 @@ def fetch_and_save_reviews(WEXTRACTOR_API,PLATFORM_URL,service_platform,page_id)
 
 
 def get_platform_users(platform_name):
+    """
+        This method will return the queryset of User who are created
+        Service Platform account.
+    """
     users = CustomUser.objects.filter(
             is_active=True,
             # is_staff = False,
@@ -91,18 +98,34 @@ def get_platform_users(platform_name):
                     'serviceplatforms_set',
                     queryset=ServicePlatforms.objects.select_related('platform')
                 )
-            ).distinct()
-
+            )
     return users
 
-def get_platform(user):
+def get_platform(user,platform_name):
+    """
+        This method will return the service_platform of user
+        Parameter:
+        1.user
+        2.platform name of this user
+
+    """
     service_platform = [
         sp for sp in user.serviceplatforms_set.all()
+        if sp.platform.name.lower() == platform_name
     ]
+
     platform = service_platform[-1] if service_platform else None 
     return platform
 
 def extract_page_id(platform_name,platform_link):
+    """
+        Extact PageID based on Platform Name.
+
+        Function will take input of platform name and URL.
+        Then return the page id based requirements of Wextractor API.
+    """
+
+    print(platform_link,platform_name)
     if platform_name.lower() == 'tripadvisor':
         match = re.search(r'-d(\d+)-', platform_link)
         return match.group(1) if match else None
@@ -110,3 +133,9 @@ def extract_page_id(platform_name,platform_link):
     elif(platform_name.lower() == 'booking'):
         match = re.search(r"/hotel/([^/]+/[^/.]+)\.html", platform_link)
         return match.group(1) if match else None
+
+    elif(platform_name.lower() == 'facebook'):
+        print('facebook')
+        page_id = platform_link.rstrip('/').split('/')[-1]
+        print(page_id)
+        return page_id

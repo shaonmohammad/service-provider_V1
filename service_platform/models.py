@@ -54,7 +54,9 @@ class Campaign(TimestampMixin):
         (EMAIL, 'Email'),
         (WHATSAPP, 'WhatsApp'),
     ]
-    
+    uuid = models.UUIDField(default=uuid.uuid4,editable=False,null=True,blank=True)
+    start_date = models.DateField(null=True,blank=True)
+    end_date = models.DateField(null=True,blank=True)
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     service_platforms = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
@@ -70,7 +72,8 @@ class Campaign(TimestampMixin):
     
     def save(self,*args,**kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            slug = self.name + str(self.uuid)[:20]
+            self.slug = slugify(slug)
         super().save(*args,**kwargs)
 
 
@@ -130,7 +133,7 @@ class OnlineReview(models.Model):
     reviewer = models.CharField(max_length=200,null=True,blank=True)
     review = models.TextField(null=True,blank=True)
     review_date = models.DateField()
-    reviewer_image = models.URLField(null=True,blank=True)
+    reviewer_image = models.URLField(max_length=500,null=True,blank=True)
     rating = models.IntegerField(null=True,blank=True)
     service_platform = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
 

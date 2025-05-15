@@ -16,7 +16,8 @@ from .models import (
     ServicePlatforms,
     Campaign,
     Customer,
-    CustomerReview
+    CustomerReview,
+    OnlineReview
     )
 from accounts.models import CustomUser
 from .serializers import (
@@ -27,7 +28,8 @@ from .serializers import (
     ServicePlatformsListSerializer,
     CustomerListSerializer,
     CampaignDetailsSerializer,
-    CustomerReviewCreateSerializer
+    CustomerReviewCreateSerializer,
+    OnlineReviewSerializer
     )
 
 logger = logging.getLogger('celery')
@@ -146,52 +148,33 @@ class CreateCustomerReview(CreateAPIView):
         return super().create(request, *args, **kwargs)
 
 
+class CampaignOnlineReview(ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OnlineReviewSerializer
+    filter_backends =  [DjangoFilterBackend]
+    filterset_fields = ['rating',]
 
-# class FacebookPageReviewView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-#     def get(self,request,*args,**kwargs):
+    def get_queryset(self):
+        service_provider = self.request.user
+        service_platform_slug = self.kwargs.get('service_platform_slug')
+        campaign_slug = self.kwargs.get('campaign_slug')
 
-#         users = CustomUser.objects.filter(
-#             is_active=True,
-#             # is_staff = False,
-#             serviceplatforms__platform__name__iexact = 'Facebook'
-#             ).prefetch_related(
-#                 Prefetch(
-#                     'serviceplatforms_set',
-#                     queryset=ServicePlatforms.objects.select_related('platform')
-#                 )
-#             ).distinct()
-        
-#         for user in users:
-#             # Get the latest service platform for the user and specific platform
-#             facebook_platform = [
-#                 fp for fp in user.serviceplatforms_set.all()
-#                 if fp.platform.name.lower() == 'facebook'
-#             ]
+        try:
+            campaign = Campaign.objects.get(slug=campaign_slug)
+        except Campaign.DoesNotExist:
+            Response({'Campaign Does Not Exist With This Slug!'},status=status.HTTP_404_NOT_FOUND)
+    
+        return OnlineReview.objects.filter(
+            service_platform__service_provider=service_provider,
+            service_platform__slug = service_platform_slug,
+            review_date__range= [campaign.start_date,campaign.end_date]
+            ).order_by('-review_date')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset,many=True)
 
-#             service_platform = facebook_platform[-1] if facebook_platform else None
-#             if not service_platform:
-#                 logger.warning(f"{user.email} does not have a Facebook platform.")
-#                 continue
-
-#             # Extract page_id from URL
-#             try:
-#                 page_id = service_platform.platform_link.rstrip('/').split('/')[-1]
-#             except Exception:
-#                 logger.exception("Invalid Platform Link", exc_info=True)
-#                 continue
-            
-#             """
-#                 This method fetch data from API
-#                 and save the fetched data to databse
-                
-#                 Perameter:
-#                 1.Service Platform
-#                 2.Page ID (Facebook Page URL)
-#             """
-#             fetch_and_save_reviews(service_platform,page_id)
-             
-#         return Response({
-#             "message": "Facebook reviews fetched successfully",
-#         })
-
+        return Response({
+            'total_review':queryset.count(),
+            'results':serializer.data
+        })
