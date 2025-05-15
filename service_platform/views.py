@@ -16,7 +16,8 @@ from .models import (
     ServicePlatforms,
     Campaign,
     Customer,
-    CustomerReview
+    CustomerReview,
+    OnlineReview
     )
 from accounts.models import CustomUser
 from .serializers import (
@@ -27,7 +28,8 @@ from .serializers import (
     ServicePlatformsListSerializer,
     CustomerListSerializer,
     CampaignDetailsSerializer,
-    CustomerReviewCreateSerializer
+    CustomerReviewCreateSerializer,
+    OnlineReviewSerializer
     )
 
 logger = logging.getLogger('celery')
@@ -145,3 +147,34 @@ class CreateCustomerReview(CreateAPIView):
             return Response({'error': 'Invalid customer UUID.'}, status=status.HTTP_404_NOT_FOUND)
         return super().create(request, *args, **kwargs)
 
+
+class CampaignOnlineReview(ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OnlineReviewSerializer
+    filter_backends =  [DjangoFilterBackend]
+    filterset_fields = ['rating',]
+
+    def get_queryset(self):
+        service_provider = self.request.user
+        service_platform_slug = self.kwargs.get('service_platform_slug')
+        campaign_slug = self.kwargs.get('campaign_slug')
+
+        try:
+            campaign = Campaign.objects.get(slug=campaign_slug)
+        except Campaign.DoesNotExist:
+            Response({'Campaign Does Not Exist With This Slug!'},status=status.HTTP_404_NOT_FOUND)
+    
+        return OnlineReview.objects.filter(
+            service_platform__service_provider=service_provider,
+            service_platform__slug = service_platform_slug,
+            review_date__range= [campaign.start_date,campaign.end_date]
+            ).order_by('-review_date')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset,many=True)
+
+        return Response({
+            'total_review':queryset.count(),
+            'results':serializer.data
+        })

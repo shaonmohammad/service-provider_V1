@@ -11,6 +11,7 @@ from .views import (
     CustomerListAPIView,
     CampaignDetailsAPIView,
     CreateCustomerReview,
+    CampaignOnlineReview
 #     FacebookPageReviewView
     )
 
@@ -38,6 +39,11 @@ urlpatterns = [
     path('service_platforms/<slug:service_platform_slug>/campaigns/<slug:campaign_slug>/', 
          CampaignDetailsAPIView.as_view(),
          name='campaign-details'),
+
+    path('service_platforms/<slug:service_platform_slug>/campaigns/<slug:campaign_slug>/online_reviews/',
+         CampaignOnlineReview.as_view(),
+         name='online-review'
+         ),
 
     path('service_platforms/<int:service_platform_slug>/campaigns/<int:campaign_slug>/customers/',
          CustomerListAPIView.as_view(),

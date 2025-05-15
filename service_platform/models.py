@@ -55,6 +55,8 @@ class Campaign(TimestampMixin):
         (WHATSAPP, 'WhatsApp'),
     ]
     uuid = models.UUIDField(default=uuid.uuid4,editable=False,null=True,blank=True)
+    start_date = models.DateField(null=True,blank=True)
+    end_date = models.DateField(null=True,blank=True)
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     service_platforms = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)

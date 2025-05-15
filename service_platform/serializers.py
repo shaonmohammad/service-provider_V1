@@ -9,7 +9,8 @@ from .models import (
     Platform,Campaign,
     Customer,
     CampaignMessage,
-    CustomerReview
+    CustomerReview,
+    OnlineReview
     )
 
 
@@ -245,4 +246,11 @@ class CustomerReviewCreateSerializer(serializers.ModelSerializer):
         model = CustomerReview
         fields = ['rating', 'review_text']
 
+
+class OnlineReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OnlineReview
+        exclude = ('service_platform',)
+
+    
     

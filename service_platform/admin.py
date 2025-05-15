@@ -24,6 +24,7 @@ class ServicePlatformsAdmin(admin.ModelAdmin):
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ('created_at','uuid', 'name', 'email', 'phone_number', 'campaign',)
 
+
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin):
     list_display = ('created_at','name','description','get_service_provider','get_service_platforms')
