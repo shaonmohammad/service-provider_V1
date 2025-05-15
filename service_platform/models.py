@@ -54,7 +54,7 @@ class Campaign(TimestampMixin):
         (EMAIL, 'Email'),
         (WHATSAPP, 'WhatsApp'),
     ]
-    
+    uuid = models.UUIDField(default=uuid.uuid4,editable=False,null=True,blank=True)
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     service_platforms = models.ForeignKey(ServicePlatforms,on_delete=models.CASCADE)
@@ -70,7 +70,8 @@ class Campaign(TimestampMixin):
     
     def save(self,*args,**kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            slug = self.name + str(self.uuid)[:20]
+            self.slug = slugify(slug)
         super().save(*args,**kwargs)
 
 
