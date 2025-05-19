@@ -49,22 +49,20 @@ class CookieTokenObtainPairView(TokenObtainPairView):
         response = Response({'message': 'Login successful','access_token':tokens['access'],'refresh_token':tokens['refresh']}, status=status.HTTP_200_OK)
 
         # Set access and refresh tokens as HttpOnly cookies
-        response.set_cookie(
-            key='access_token',
-            value=tokens['access'],
-            httponly=True,
-            secure=True,      
-            samesite='Lax',
-            max_age=60 * 15
-        )
+        # response.set_cookie(
+        #     key='access_token',
+        #     value=tokens['access'],
+        #     httponly=True,
+        #     secure=True,
+        #     samesite='None',  
+           
+        # )
         # response.set_cookie(
         #     key='refresh_token',
         #     value=tokens['refresh'],
         #     httponly=True,
         #     secure=True,
-        #     samesite='None',
-        #     max_age=60 * 60 * 24 * 7
-
+        #     samesite='None',  
         # )
         return response
 

@@ -34,16 +34,15 @@ ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
-    'https://0f97-103-174-189-26.ngrok-free.app'
+    'http://192.168.0.134:3000',
+    'http://192.168.0.100:8080',
+    'https://c401-103-174-189-26.ngrok-free.app',
+    'https://apis.justreview.io',
+    'http://82.180.146.131:8000'
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'https://localhost:3000',
-    'https://*.ngrok-free.app',
-]
 
 
 # Application definition
@@ -71,6 +70,7 @@ INSTALLED_APPS = [
     'accounts',
     'service_platform',
     'django_filters',
+    'django_celery_beat',
 ]
 # django.contrib.sites
 SITE_ID = 1
