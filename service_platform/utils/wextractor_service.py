@@ -29,7 +29,7 @@ def save_data_to_model(service_platform,data):
                 'review'  : review.get('text') or review.get('title'),
                 'review_date' : date,
                 'rating' : float(review.get('rating')) if review.get('rating') else 0,
-                'reviewer_image' : review.get('review_avatar') or review.get('avatar'),
+                'reviewer_image' : review.get('reviewer_avatar') or review.get('avatar'),
                 'service_platform' : service_platform,
             }
         )
