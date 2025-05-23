@@ -44,7 +44,6 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -146,11 +145,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
 
-USE_I18N = True
+# USE_I18N = True
 
-USE_TZ = True
+# USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -184,54 +183,54 @@ LOG_DIR = os.path.join(BASE_DIR, 'log_file')
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
 
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
+#     'formatters': {
+#         'verbose': {
+#             'format': '{levelname} {asctime} {module} {message}',
+#             'style': '{',
+#         },
+#         'simple': {
+#             'format': '{levelname} {message}',
+#             'style': '{',
+#         },
+#     },
 
-    'handlers': {
-        'django_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'django.log'),
-            'formatter': 'verbose',
-        },
-        'celery_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'celery.log'),
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-    },
+#     'handlers': {
+#         'django_file': {
+#             'level': 'INFO',
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(LOG_DIR, 'django.log'),
+#             'formatter': 'verbose',
+#         },
+#         'celery_file': {
+#             'level': 'INFO',
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(LOG_DIR, 'celery.log'),
+#             'formatter': 'verbose',
+#         },
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'simple',
+#         },
+#     },
 
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'django_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'celery': {
-            'handlers': ['console', 'celery_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    }
-}
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console', 'django_file'],
+#             'level': 'INFO',
+#             'propagate': False,
+#         },
+#         'celery': {
+#             'handlers': ['console', 'celery_file'],
+#             'level': 'INFO',
+#             'propagate': False,
+#         },
+#     }
+# }
 
 
 
@@ -263,14 +262,10 @@ SIMPLE_JWT = {
 }
 
 # Redis configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 ACCOUNT_EMAIL_VERIFICATION = "none"
-
 
 
 # import os
@@ -282,3 +277,13 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 # ACCOUNT_EMAIL_VERIFICATION = "none" # Do not require email confirmation
 
 WEXTRACTOR_API_KEY = env('WEXTRACTOR_API_KEY')
+
+
+
+CELERY_BROKER_URL = 'redis://localhost:6378/0'  # Redis as broker
+CELERY_RESULT_BACKEND = 'redis://localhost:6378/1'  # Redis as result backend
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+

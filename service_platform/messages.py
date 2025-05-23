@@ -11,7 +11,7 @@ from sendgrid.helpers.mail import Mail, Personalization, Email, To, Content, Cus
 logger = logging.getLogger('celery')
 
 
-@shared_task(bind=True, max_retries=3)
+
 def send_twilio_message(self, recipient, message, method):
     """Send SMS or WhatsApp message using Twilio"""
     try:
@@ -36,7 +36,7 @@ def send_twilio_message(self, recipient, message, method):
         raise self.retry(exc=e, countdown=60)  # Retry after 60 sec if failed
 
 
-@shared_task(bind=True, max_retries=3)
+
 def send_bulk_email(self,recipients, subject, message,campaign_id,base_url):
     sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
     from_email = Email(settings.EMAIL_HOST)
