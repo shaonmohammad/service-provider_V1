@@ -58,9 +58,9 @@ urlpatterns = [
           name='email_event_webhook'),
 
      # Facebook Page Review
-     path('service_platform/reviews/fetch/',
-          tripadvisor_review,
-          name='facebook-page-review')
+     # path('service_platform/reviews/fetch/',
+     #      facebook_page_review,
+     #      name='facebook-page-review')
 ]
 
 
