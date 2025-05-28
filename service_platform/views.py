@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponseForbidden
 from django.conf import settings
 from django.db.models import Prefetch
-
+from django.db.models import Count, Avg
 
 from .models import (
     Platform,
@@ -70,14 +70,15 @@ class CampaignListAPIView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self): 
-        service_platform_slug = self.kwargs.get("slug")
-        service_platform = get_object_or_404(ServicePlatforms,slug=service_platform_slug)
+        service_platform_id = self.kwargs.get("service_platform_id")
+        service_platform = get_object_or_404(ServicePlatforms,id=service_platform_id)
 
         # Filter the Campaigns based on the service_platform and the current user
         return Campaign.objects.filter(
             service_provider=self.request.user,
             service_platforms=service_platform
-        )
+        ).annotate(total_customer=Count('customers'))
+    
 class CampaignDetailsAPIView(ListAPIView):
     serializer_class = CampaignDetailsSerializer
     permission_classes = [permissions.IsAuthenticated]

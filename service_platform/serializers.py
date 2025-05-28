@@ -190,24 +190,27 @@ class ServicePlatformsListSerializer(serializers.ModelSerializer):
             ) 
 
 class CampaignListSerializer(serializers.ModelSerializer):
-    platform = serializers.SerializerMethodField()
+    servcie_platform = serializers.SerializerMethodField()
+    total_customer = serializers.SerializerMethodField()
     class Meta:
         model = Campaign
         fields = (
             'id',
-            'created_at',
-            'updated_at',
+            'start_date',
+            'end_date',
             'name',
             'description',
-            'service_platforms',
-            'platform'
+            'servcie_platform',
+            'communication_method',
+            'total_customer',
         )
     
-    def get_platform(self,obj):
+    def get_servcie_platform(self,obj):
         return obj.service_platforms.platform.name if obj.service_platforms.platform else None
     
-   
-    
+    def get_total_customer(self,obj):
+        return getattr(obj,'total_customer',0)
+ 
 class CampaignDetailsSerializer(serializers.ModelSerializer):
     platform = serializers.SerializerMethodField()
     customer = CustomerListSerializer(many=True, read_only=True, source="customers")

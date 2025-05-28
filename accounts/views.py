@@ -160,7 +160,6 @@ class GoogleReviewsView(APIView):
         }
         # Get Google business account
         account_resp = requests.get("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", headers=headers)
-        print(account_resp)
         if account_resp.status_code != 200:
             return Response({"error": "Failed to fetch account info", "detail": account_resp.json()}, status=account_resp.status_code)
         
